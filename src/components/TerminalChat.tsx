@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Send, Pin, PinOff, Trash2, Loader2, ArrowLeft, ChevronDown, Sparkles, Heart, Palette, CheckSquare, Square, Image as ImageIcon, Video as VideoIcon, FileText, Download, Eye, Settings, X, Globe, Smile } from 'lucide-react';
+import { Send, Pin, PinOff, Trash2, Loader2, ArrowLeft, ChevronDown, Sparkles, Heart, Palette, CheckSquare, Square, Image as ImageIcon, Video as VideoIcon, FileText, Download, Eye, Settings, X, Globe, Smile, Upload } from 'lucide-react';
 import { useRealtimeMessages } from '../hooks/useRealtimeMessages';
+import { useChatSettings } from '../hooks/useChatSettings';
 
 interface TerminalChatProps {
   userId: string;
@@ -254,14 +255,101 @@ const THEMES: Record<
 };
 
 export default function TerminalChat({ userId, onBack }: TerminalChatProps) {
-  // Editable chat name, persisted in localStorage
-  const [chatTitle, setChatTitle] = useState(() => {
-    return localStorage.getItem('secret_chat_title') || 'Secret Sanctuary';
-  });
+  // Shared settings synchronize through Supabase; personal overrides stay on this device.
+  const { settings: sharedSettings, saveSharedSettings, uploadSharedAvatar } = useChatSettings();
+  const localTitleKey = `secret_chat_title_${userId}`;
+  const localAvatarKey = `secret_chat_avatar_${userId}`;
+  const titleModeKey = `secret_chat_title_mode_${userId}`;
+  const avatarModeKey = `secret_chat_avatar_mode_${userId}`;
 
-  useEffect(() => {
-    localStorage.setItem('secret_chat_title', chatTitle);
-  }, [chatTitle]);
+  const [localTitle, setLocalTitle] = useState(() => localStorage.getItem(localTitleKey) || 'Secret Sanctuary');
+  const [localAvatar, setLocalAvatar] = useState<string | null>(() => localStorage.getItem(localAvatarKey));
+  const [titleMode, setTitleMode] = useState<'local' | 'shared'>(() => (localStorage.getItem(titleModeKey) as 'local' | 'shared') || 'local');
+  const [avatarMode, setAvatarMode] = useState<'local' | 'shared'>(() => (localStorage.getItem(avatarModeKey) as 'local' | 'shared') || 'local');
+  const chatTitle = titleMode === 'shared' ? sharedSettings.title : localTitle;
+  const chatAvatar = avatarMode === 'shared' ? sharedSettings.avatar_url : localAvatar;
+
+  const [settingsTitleDraft, setSettingsTitleDraft] = useState(localTitle);
+  const [settingsTitleMode, setSettingsTitleMode] = useState<'local' | 'shared'>(titleMode);
+  const [settingsAvatarMode, setSettingsAvatarMode] = useState<'local' | 'shared'>(avatarMode);
+  const [settingsAvatarDraft, setSettingsAvatarDraft] = useState<string | null>(localAvatar);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+
+  const openSettings = () => {
+    setSettingsTitleDraft(titleMode === 'shared' ? sharedSettings.title : localTitle);
+    setSettingsTitleMode(titleMode);
+    setSettingsAvatarMode(avatarMode);
+    setSettingsAvatarDraft(avatarMode === 'shared' ? sharedSettings.avatar_url : localAvatar);
+    setAvatarFile(null);
+    setSettingsError(null);
+    setShowSettings(true);
+  };
+
+  const handleAvatarChoose = (file?: File) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setSettingsError('Please choose an image file.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setSettingsError('Avatar image must be smaller than 5 MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setSettingsAvatarDraft(String(reader.result));
+      setAvatarFile(file);
+      setSettingsError(null);
+    };
+    reader.onerror = () => setSettingsError('Could not read this image.');
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveSettings = async () => {
+    const title = settingsTitleDraft.trim() || 'Secret Sanctuary';
+    setSavingSettings(true);
+    setSettingsError(null);
+
+    try {
+      let sharedTitle = sharedSettings.title || 'Secret Sanctuary';
+      let sharedAvatar = sharedSettings.avatar_url;
+
+      if (settingsTitleMode === 'shared') sharedTitle = title;
+      if (settingsAvatarMode === 'shared' && avatarFile) {
+        const uploaded = await uploadSharedAvatar(avatarFile);
+        if (uploaded.error || !uploaded.url) throw new Error(uploaded.error || 'Avatar upload failed.');
+        sharedAvatar = uploaded.url;
+      } else if (settingsAvatarMode === 'shared') {
+        sharedAvatar = settingsAvatarDraft;
+      }
+
+      if (settingsTitleMode === 'shared' || settingsAvatarMode === 'shared') {
+        const result = await saveSharedSettings(sharedTitle, sharedAvatar);
+        if (result.error) throw new Error(result.error);
+      }
+
+      if (settingsTitleMode === 'local') {
+        localStorage.setItem(localTitleKey, title);
+        setLocalTitle(title);
+      }
+      if (settingsAvatarMode === 'local') {
+        if (settingsAvatarDraft) localStorage.setItem(localAvatarKey, settingsAvatarDraft);
+        else localStorage.removeItem(localAvatarKey);
+        setLocalAvatar(settingsAvatarDraft);
+      }
+      localStorage.setItem(titleModeKey, settingsTitleMode);
+      localStorage.setItem(avatarModeKey, settingsAvatarMode);
+      setTitleMode(settingsTitleMode);
+      setAvatarMode(settingsAvatarMode);
+      setShowSettings(false);
+    } catch (error) {
+      setSettingsError(error instanceof Error ? error.message : 'Could not save settings.');
+    } finally {
+      setSavingSettings(false);
+    }
+  };
 
   const { messages, connected, sendMessage, togglePin } =
     useRealtimeMessages(userId, () => mountedRef.current);
@@ -534,9 +622,13 @@ export default function TerminalChat({ userId, onBack }: TerminalChatProps) {
             {t('back')}
           </button>
           <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-tr from-pink-500 to-purple-500 text-white shadow-md">
-              <Sparkles size={18} />
-            </span>
+            {chatAvatar ? (
+              <img src={chatAvatar} alt="Chat avatar" className="h-9 w-9 rounded-2xl object-cover border border-white/20 shadow-md" />
+            ) : (
+              <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-tr from-pink-500 to-purple-500 text-white shadow-md">
+                <Sparkles size={18} />
+              </span>
+            )}
             <div>
               <h1 className="text-sm font-bold tracking-wide">{chatTitle}</h1>
             </div>
@@ -562,7 +654,7 @@ export default function TerminalChat({ userId, onBack }: TerminalChatProps) {
 
           {/* Settings Button */}
           <button
-            onClick={() => setShowSettings(true)}
+            onClick={openSettings}
             className="flex items-center gap-1.5 rounded-full border border-current/20 bg-current/5 px-3.5 py-1.5 font-medium transition-all hover:bg-current/10"
             title={t('settings')}
           >
@@ -854,57 +946,78 @@ export default function TerminalChat({ userId, onBack }: TerminalChatProps) {
 
       {/* Settings Modal */}
       {showSettings && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-6 backdrop-blur-md animate-fadeIn">
-          <div className="flex flex-col w-full max-w-md rounded-3xl border border-purple-500/30 bg-[#181622] shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-md animate-fadeIn">
+          <div className="flex flex-col w-full max-w-md max-h-[90vh] rounded-3xl border border-purple-500/30 bg-[#181622] shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between border-b border-purple-500/20 px-6 py-4 bg-purple-950/40">
               <div className="flex items-center gap-2.5">
                 <Settings size={20} className="text-pink-400" />
                 <h2 className="text-sm font-bold text-white">{t('settings')}</h2>
               </div>
-              <button
-                onClick={() => setShowSettings(false)}
-                className="rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-all"
-              >
+              <button onClick={() => setShowSettings(false)} className="rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-all">
                 <X size={18} />
               </button>
             </div>
 
-            <div className="p-6 space-y-4 text-xs">
-              {/* Editable chat name */}
-              <div className="space-y-2">
+            <div className="p-6 space-y-5 text-xs overflow-y-auto">
+              <section className="space-y-2">
                 <label htmlFor="secret-chat-name" className="flex items-center gap-2 font-medium text-purple-200">
-                  <Sparkles size={16} className="text-pink-400" />
-                  <span>{t('chatName')}</span>
+                  <Sparkles size={16} className="text-pink-400" /> {t('chatName')}
                 </label>
-                <input
-                  id="secret-chat-name"
-                  type="text"
-                  value={chatTitle}
-                  onChange={(e) => setChatTitle(e.target.value)}
-                  maxLength={40}
+                <input id="secret-chat-name" type="text" value={settingsTitleDraft}
+                  onChange={(e) => setSettingsTitleDraft(e.target.value)} maxLength={40}
                   placeholder="Secret Sanctuary"
-                  className="w-full rounded-xl border border-purple-500/30 bg-[#121118] px-3 py-2.5 text-white outline-none placeholder:text-white/30 focus:border-pink-500 shadow-inner"
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 font-medium text-purple-200">
-                  <Globe size={16} className="text-pink-400" />
-                  <span>{t('language')}</span>
+                  className="w-full rounded-xl border border-purple-500/30 bg-[#121118] px-3 py-2.5 text-white outline-none placeholder:text-white/30 focus:border-pink-500" />
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setSettingsTitleMode('local')}
+                    className={`flex-1 rounded-xl border px-3 py-2 ${settingsTitleMode === 'local' ? 'border-pink-400 bg-pink-500/20 text-white' : 'border-purple-500/30 text-purple-200'}`}>
+                    Only on my side
+                  </button>
+                  <button type="button" onClick={() => setSettingsTitleMode('shared')}
+                    className={`flex-1 rounded-xl border px-3 py-2 ${settingsTitleMode === 'shared' ? 'border-pink-400 bg-pink-500/20 text-white' : 'border-purple-500/30 text-purple-200'}`}>
+                    Both sides
+                  </button>
                 </div>
-                <select
-                  value={lang}
-                  onChange={(e) => setLang(e.target.value as LangKey)}
-                  className="rounded-xl border border-purple-500/30 bg-[#121118] px-3 py-2 text-white outline-none font-medium shadow-inner"
-                >
-                  <option value="en">English</option>
-                  <option value="vi">Tiếng Việt</option>
-                  <option value="ja">日本語</option>
-                  <option value="ko">한국어</option>
-                  <option value="fr">Français 🇫🇷</option>
-                  <option value="es">Español 🇪🇸</option>
+              </section>
+
+              <section className="space-y-2">
+                <div className="font-medium text-purple-200 flex items-center gap-2"><ImageIcon size={16} className="text-pink-400" /> Chat avatar</div>
+                <div className="flex items-center gap-3">
+                  {settingsAvatarDraft ? <img src={settingsAvatarDraft} alt="Avatar preview" className="h-16 w-16 rounded-2xl object-cover border border-purple-400/30" /> :
+                    <div className="h-16 w-16 rounded-2xl bg-gradient-to-tr from-pink-500 to-purple-500 flex items-center justify-center text-white"><Sparkles size={24} /></div>}
+                  <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-purple-500/30 bg-purple-500/10 px-4 py-2.5 text-purple-100 hover:bg-purple-500/20">
+                    <Upload size={14} /> Choose image
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleAvatarChoose(e.target.files?.[0])} />
+                  </label>
+                  {settingsAvatarDraft && <button type="button" onClick={() => { setSettingsAvatarDraft(null); setAvatarFile(null); }} className="text-rose-300 hover:text-rose-200">Remove</button>}
+                </div>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setSettingsAvatarMode('local')}
+                    className={`flex-1 rounded-xl border px-3 py-2 ${settingsAvatarMode === 'local' ? 'border-pink-400 bg-pink-500/20 text-white' : 'border-purple-500/30 text-purple-200'}`}>
+                    Only on my side
+                  </button>
+                  <button type="button" onClick={() => setSettingsAvatarMode('shared')}
+                    className={`flex-1 rounded-xl border px-3 py-2 ${settingsAvatarMode === 'shared' ? 'border-pink-400 bg-pink-500/20 text-white' : 'border-purple-500/30 text-purple-200'}`}>
+                    Both sides
+                  </button>
+                </div>
+                <p className="text-[10px] text-purple-300/60">Images must be 5 MB or smaller.</p>
+              </section>
+
+              <div className="flex items-center justify-between border-t border-purple-500/20 pt-4">
+                <div className="flex items-center gap-2 font-medium text-purple-200"><Globe size={16} className="text-pink-400" /> {t('language')}</div>
+                <select value={lang} onChange={(e) => setLang(e.target.value as LangKey)}
+                  className="rounded-xl border border-purple-500/30 bg-[#121118] px-3 py-2 text-white outline-none font-medium">
+                  <option value="en">English</option><option value="vi">Tiếng Việt</option>
+                  <option value="ja">日本語</option><option value="ko">한국어</option>
+                  <option value="fr">Français 🇫🇷</option><option value="es">Español 🇪🇸</option>
                 </select>
               </div>
+              {settingsError && <p role="alert" className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-rose-300">{settingsError}</p>}
+              <button type="button" onClick={handleSaveSettings} disabled={savingSettings}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 px-4 py-3 font-semibold text-white shadow-lg transition-all hover:brightness-110 disabled:opacity-50">
+                {savingSettings ? <Loader2 size={15} className="animate-spin" /> : null}
+                {savingSettings ? 'Saving...' : 'Save Changes'}
+              </button>
             </div>
           </div>
         </div>
