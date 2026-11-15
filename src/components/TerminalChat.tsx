@@ -9,6 +9,14 @@ interface TerminalChatProps {
 
 type ThemeKey = 'cozy' | 'cyber' | 'matcha' | 'sakura';
 type LangKey = 'en' | 'vi' | 'ja' | 'ko' | 'fr' | 'es';
+// Editable chat name, persisted in localStorage
+const [chatTitle, setChatTitle] = useState(() => {
+  return localStorage.getItem('secret_chat_title') || 'Secret Sanctuary';
+});
+
+useEffect(() => {
+  localStorage.setItem('secret_chat_title', chatTitle);
+}, [chatTitle]);
 
 const STICKERS = [
   { id: '1', name: 'Happy Bunny', symbol: '(๑>◡<๑)' },
