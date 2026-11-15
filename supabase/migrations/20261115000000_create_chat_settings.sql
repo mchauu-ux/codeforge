@@ -1,78 +1,55 @@
--- Shared chat settings: one row for the shared chat room
-CREATE TABLE IF NOT EXISTS public.chat_settings (
-  id text PRIMARY KEY CHECK (id = 'main'),
-  title text NOT NULL DEFAULT 'Secret Sanctuary',
+-- Shared settings for the single chat room.
+-- Run this migration in your Supabase project.
+
+create table if not exists public.chat_settings (
+  id text primary key check (id = 'main'),
+  title text not null default 'Secret Sanctuary',
   avatar_url text,
-  updated_at timestamptz NOT NULL DEFAULT now()
+  updated_at timestamptz not null default now()
 );
 
-ALTER TABLE public.chat_settings ENABLE ROW LEVEL SECURITY;
+insert into public.chat_settings (id, title)
+values ('main', 'Secret Sanctuary')
+on conflict (id) do nothing;
 
-GRANT SELECT, INSERT, UPDATE ON public.chat_settings TO authenticated;
+alter table public.chat_settings enable row level security;
 
-DROP POLICY IF EXISTS "authenticated_read_chat_settings"
-  ON public.chat_settings;
-CREATE POLICY "authenticated_read_chat_settings"
-  ON public.chat_settings
-  FOR SELECT TO authenticated
-  USING (true);
+drop policy if exists "Authenticated users can read chat settings"
+  on public.chat_settings;
+create policy "Authenticated users can read chat settings"
+  on public.chat_settings
+  for select
+  to authenticated
+  using (true);
 
-DROP POLICY IF EXISTS "authenticated_insert_chat_settings"
-  ON public.chat_settings;
-CREATE POLICY "authenticated_insert_chat_settings"
-  ON public.chat_settings
-  FOR INSERT TO authenticated
-  WITH CHECK (true);
+drop policy if exists "Authenticated users can insert chat settings"
+  on public.chat_settings;
+create policy "Authenticated users can insert chat settings"
+  on public.chat_settings
+  for insert
+  to authenticated
+  with check (id = 'main');
 
-DROP POLICY IF EXISTS "authenticated_update_chat_settings"
-  ON public.chat_settings;
-CREATE POLICY "authenticated_update_chat_settings"
-  ON public.chat_settings
-  FOR UPDATE TO authenticated
-  USING (true)
-  WITH CHECK (true);
+drop policy if exists "Authenticated users can update chat settings"
+  on public.chat_settings;
+create policy "Authenticated users can update chat settings"
+  on public.chat_settings
+  for update
+  to authenticated
+  using (id = 'main')
+  with check (id = 'main');
 
--- Create a public bucket for shared chat avatars
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('chat-avatars', 'chat-avatars', true)
-ON CONFLICT (id) DO UPDATE SET public = true;
+-- Public bucket: uploaded avatar images can be viewed by anyone with the URL.
+insert into storage.buckets (id, name, public)
+values ('chat-avatars', 'chat-avatars', true)
+on conflict (id) do update set public = excluded.public;
 
-DROP POLICY IF EXISTS "chat_avatars_public_read" ON storage.objects;
-CREATE POLICY "chat_avatars_public_read"
-  ON storage.objects
-  FOR SELECT
-  USING (bucket_id = 'chat-avatars');
+drop policy if exists "Authenticated users can upload chat avatars"
+  on storage.objects;
+create policy "Authenticated users can upload chat avatars"
+  on storage.objects
+  for insert
+  to authenticated
+  with check (bucket_id = 'chat-avatars');
 
-DROP POLICY IF EXISTS "chat_avatars_authenticated_upload" ON storage.objects;
-CREATE POLICY "chat_avatars_authenticated_upload"
-  ON storage.objects
-  FOR INSERT TO authenticated
-  WITH CHECK (bucket_id = 'chat-avatars');
-
-DROP POLICY IF EXISTS "chat_avatars_authenticated_update" ON storage.objects;
-CREATE POLICY "chat_avatars_authenticated_update"
-  ON storage.objects
-  FOR UPDATE TO authenticated
-  USING (bucket_id = 'chat-avatars')
-  WITH CHECK (bucket_id = 'chat-avatars');
-
-DROP POLICY IF EXISTS "chat_avatars_authenticated_delete" ON storage.objects;
-CREATE POLICY "chat_avatars_authenticated_delete"
-  ON storage.objects
-  FOR DELETE TO authenticated
-  USING (bucket_id = 'chat-avatars');
-
--- Add chat settings to Supabase Realtime if not already present
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1
-    FROM pg_publication_tables
-    WHERE pubname = 'supabase_realtime'
-      AND schemaname = 'public'
-      AND tablename = 'chat_settings'
-  ) THEN
-    ALTER PUBLICATION supabase_realtime
-      ADD TABLE public.chat_settings;
-  END IF;
-END $$;
+-- No DELETE policy is needed because each upload uses a unique filename.
