@@ -791,7 +791,7 @@ const handleSaveSettings = async () => {
 
         {visible.map((m) => {
           // Force all messages to align on the right side consistently
-          const own = true;
+          const own = m.sender_id === userId;
           const isSelected = selectedIds.includes(m.id);
           const isImage = m.content.startsWith('data:image');
           const isVideo = m.content.startsWith('data:video');
@@ -807,7 +807,9 @@ const handleSaveSettings = async () => {
           return (
             <div
               key={m.id}
-              className="group flex items-center gap-3 px-2 justify-end"
+              className={`group flex items-center gap-3 px-2 ${
+  own ? 'justify-end' : 'justify-start'
+}`}
             >
               {selectMode && (
                 <button
@@ -833,7 +835,7 @@ const handleSaveSettings = async () => {
     : isFileCard
     ? ''
     : `w-fit max-w-full rounded-2xl p-3.5 text-sm shadow-md ${
-        theme.bubbleOwn
+        ${own ? theme.bubbleOwn : theme.bubbleOther}
       } rounded-br-sm ${m.is_pinned ? 'ring-2 ring-amber-400/60' : ''}`
 } ${selectMode ? 'cursor-pointer hover:opacity-90' : ''}`}
                   >
@@ -909,7 +911,9 @@ const handleSaveSettings = async () => {
                 </div>
 
                 {/* Timestamp right underneath, perfectly aligned to the right edge */}
-              <div className="flex items-center justify-end gap-1 text-[9px] opacity-50 w-full">
+              <div className={`flex items-center gap-1 text-[9px] opacity-50 w-full ${
+  own ? 'justify-end' : 'justify-start'
+}`}>
   <span>{formatDateTime(m.created_at)}</span>
   {m.is_pinned && (    <Pin size={9} className="text-amber-400 fill-amber-400 inline" />
 )}
