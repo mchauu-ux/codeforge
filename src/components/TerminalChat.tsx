@@ -840,7 +840,7 @@ const handleSaveSettings = async () => {
     ? ''
     : `w-fit max-w-full rounded-2xl p-3.5 text-sm shadow-md ${
     own ? theme.bubbleOwn : theme.bubbleOther
-      } rounded-br-sm ${m.is_pinned ? 'ring-2 ring-amber-400/60' : ''}`
+      }own ? 'rounded-br-sm' : 'rounded-bl-sm' ${m.is_pinned ? 'ring-2 ring-amber-400/60' : ''}`
 } ${selectMode ? 'cursor-pointer hover:opacity-90' : ''}`}
                   >
                     {isImage ? (
