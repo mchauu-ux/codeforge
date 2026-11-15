@@ -791,7 +791,7 @@ const handleSaveSettings = async () => {
 
         {visible.map((m) => {
      
-const own = m.sender_id === userId;
+          const own = m.sender_id === userId;
           const isSelected = selectedIds.includes(m.id);
           const isImage = m.content.startsWith('data:image');
           const isVideo = m.content.startsWith('data:video');
@@ -805,10 +805,12 @@ const own = m.sender_id === userId;
           const isFileCard = filePayload && filePayload.data;
 
           return (
-            <div
-              key={m.id}
-              className="group flex items-center gap-3 px-2 justify-end"
-            >
+          <div
+  key={m.id}
+  className={`group flex items-center gap-3 px-2 ${
+    own ? 'justify-end' : 'justify-start'
+  }`}
+>
               {selectMode && (
                 <button
                   type="button"
