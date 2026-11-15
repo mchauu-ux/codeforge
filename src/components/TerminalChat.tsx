@@ -307,49 +307,77 @@ export default function TerminalChat({ userId, onBack }: TerminalChatProps) {
     reader.readAsDataURL(file);
   };
 
-  const handleSaveSettings = async () => {
-    const title = settingsTitleDraft.trim() || 'Secret Sanctuary';
-    setSavingSettings(true);
-    setSettingsError(null);
+  
+const handleSaveSettings = async () => {
+  const title = settingsTitleDraft.trim() || 'Secret Sanctuary';
 
-    try {
-      let sharedTitle = sharedSettings.title || 'Secret Sanctuary';
-      let sharedAvatar = sharedSettings.avatar_url;
+  setSavingSettings(true);
+  setSettingsError(null);
 
-      if (settingsTitleMode === 'shared') sharedTitle = title;
-      if (settingsAvatarMode === 'shared' && avatarFile) {
-        const uploaded = await uploadSharedAvatar(avatarFile);
-        if (uploaded.error || !uploaded.url) throw new Error(uploaded.error || 'Avatar upload failed.');
-        sharedAvatar = uploaded.url;
-      } else if (settingsAvatarMode === 'shared') {
-        sharedAvatar = settingsAvatarDraft;
-      }
+  try {
+    let sharedTitle = sharedSettings.title || 'Secret Sanctuary';
+    let sharedAvatar = sharedSettings.avatar_url;
 
-      if (settingsTitleMode === 'shared' || settingsAvatarMode === 'shared') {
-        const result = await saveSharedSettings(sharedTitle, sharedAvatar);
-        if (result.error) throw new Error(result.error);
-      }
-
-      if (settingsTitleMode === 'local') {
-        localStorage.setItem(localTitleKey, title);
-        setLocalTitle(title);
-      }
-      if (settingsAvatarMode === 'local') {
-        if (settingsAvatarDraft) localStorage.setItem(localAvatarKey, settingsAvatarDraft);
-        else localStorage.removeItem(localAvatarKey);
-        setLocalAvatar(settingsAvatarDraft);
-      }
-      localStorage.setItem(titleModeKey, settingsTitleMode);
-      localStorage.setItem(avatarModeKey, settingsAvatarMode);
-      setTitleMode(settingsTitleMode);
-      setAvatarMode(settingsAvatarMode);
-      setShowSettings(false);
-    } catch (error) {
-      setSettingsError(error instanceof Error ? error.message : 'Could not save settings.');
-    } finally {
-      setSavingSettings(false);
+    // Update shared chat name
+    if (settingsTitleMode === 'shared') {
+      sharedTitle = title;
     }
-  };
+
+    // Upload shared avatar if a new image was selected
+    if (settingsAvatarMode === 'shared' && avatarFile) {
+      const uploadedUrl = await uploadSharedAvatar(avatarFile);
+      sharedAvatar = uploadedUrl;
+    } else if (settingsAvatarMode === 'shared') {
+      sharedAvatar = settingsAvatarDraft;
+    }
+
+    // Save shared settings to Supabase
+    if (
+      settingsTitleMode === 'shared' ||
+      settingsAvatarMode === 'shared'
+    ) {
+      await saveSharedSettings(sharedTitle, sharedAvatar);
+    }
+
+    // Save personal chat name
+    if (settingsTitleMode === 'local') {
+      localStorage.setItem(localTitleKey, title);
+      setLocalTitle(title);
+    }
+
+    // Save personal avatar
+    if (settingsAvatarMode === 'local') {
+      if (settingsAvatarDraft) {
+        localStorage.setItem(localAvatarKey, settingsAvatarDraft);
+      } else {
+        localStorage.removeItem(localAvatarKey);
+      }
+
+      setLocalAvatar(settingsAvatarDraft);
+    }
+
+    // Save selected modes
+    localStorage.setItem(titleModeKey, settingsTitleMode);
+    localStorage.setItem(avatarModeKey, settingsAvatarMode);
+
+    setTitleMode(settingsTitleMode);
+    setAvatarMode(settingsAvatarMode);
+
+    setShowSettings(false);
+
+  } catch (error) {
+    console.error('Settings save error:', error);
+
+    setSettingsError(
+      error instanceof Error
+        ? error.message
+        : 'Could not save settings.'
+    );
+  } finally {
+    setSavingSettings(false);
+  }
+};
+
 
   const { messages, connected, sendMessage, togglePin } =
     useRealtimeMessages(userId, () => mountedRef.current);
