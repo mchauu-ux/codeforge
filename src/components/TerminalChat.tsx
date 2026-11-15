@@ -825,7 +825,9 @@ const handleSaveSettings = async () => {
 <div className={`flex flex-col gap-1 w-fit min-w-0 max-w-[min(75vw,420px)] ${
   own ? 'items-end' : 'items-start'
 }`}>
-                <div className="relative flex items-end justify-end w-fit max-w-full">
+               <div className={`relative flex items-end w-fit max-w-full ${
+  own ? 'justify-end' : 'justify-start'
+}`}>
                   {/* Message / Media / File Item */}
                   <div
                     onClick={() => {
