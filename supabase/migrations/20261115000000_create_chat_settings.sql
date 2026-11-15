@@ -1,6 +1,3 @@
--- Shared settings for the single chat room.
--- Run this migration in your Supabase project.
-
 create table if not exists public.chat_settings (
   id text primary key check (id = 'main'),
   title text not null default 'Secret Sanctuary',
