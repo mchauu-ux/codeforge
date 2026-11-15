@@ -1,11 +1,26 @@
+export type CourseLevel = 'Beginner' | 'Intermediate' | 'Advanced';
+
+export interface SyllabusWeek {
+  week: number;
+  title: string;
+  topics: string[];
+}
+
 export interface Course {
   id: number;
   title: string;
   description: string;
-  level: 'Beginner' | 'Intermediate' | 'Advanced';
+  level: CourseLevel;
   lessons: number;
   hours: number;
   tag: string;
+  instructor: string;
+  instructorTitle: string;
+  rating: number;
+  students: number;
+  stack: string[];
+  prerequisites: string[];
+  syllabus: SyllabusWeek[];
 }
 
 export interface ChatMessage {

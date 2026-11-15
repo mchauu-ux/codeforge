@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import {
-  Code2,
   Search,
   LogOut,
   LayoutDashboard,
@@ -9,24 +8,25 @@ import {
   Award,
   HelpCircle,
   Settings,
+  Menu,
   X,
-  SlidersHorizontal,
+  ChevronRight,
 } from 'lucide-react';
-import { COURSES as COURSE_LIST } from '../courses';
-import CourseCard from './CourseCard';
+import { useEnrollment } from '../context/EnrollmentContext';
+import Dashboard from './views/Dashboard';
+import Catalog from './views/Catalog';
+import Paths from './views/Paths';
+import Certifications from './views/Certifications';
+import CourseDetailModal from './CourseDetailModal';
+import type { Course } from '../types';
 
-export type SectionId = 'dashboard' | 'catalog' | 'paths' | 'certifications' | 'help' | 'settings';
-
-const LEVELS = ['Beginner', 'Intermediate', 'Advanced'] as const;
-
-interface LandingPageProps {
-  query: string;
-  onQueryChange: (q: string) => void;
-  sessionEmail: string | null;
-  onSignOut: () => void;
-  onSignupClick: () => void;
-  onSigninClick: () => void;
-}
+export type SectionId =
+  | 'dashboard'
+  | 'catalog'
+  | 'paths'
+  | 'certifications'
+  | 'help'
+  | 'settings';
 
 const NAV_ITEMS: { id: SectionId; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -37,12 +37,37 @@ const NAV_ITEMS: { id: SectionId; label: string; icon: typeof LayoutDashboard }[
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
-const PATHS = [
-  { title: 'Backend Engineer', courses: 4, hours: 128, tags: ['rust', 'databases', 'distributed'] },
-  { title: 'Platform Engineer', courses: 3, hours: 96, tags: ['distributed', 'security'] },
-  { title: 'Language Tooling', courses: 3, hours: 88, tags: ['compilers', 'rust'] },
-  { title: 'Product Engineer', courses: 3, hours: 102, tags: ['typescript', 'fundamentals'] },
+const HELP_ITEMS = [
+  {
+    q: 'How do enrollments work?',
+    a: 'Open any course in the catalog, review the syllabus, and press "Enroll / Start Learning". Progress is tracked instantly and appears on your dashboard.',
+  },
+  {
+    q: 'How do certifications get issued?',
+    a: 'Each track ends with a proctored exam. Passing earns a credential with a cryptographic hash entered into the public verification registry.',
+  },
+  {
+    q: 'Can I switch tracks mid-cohort?',
+    a: 'Yes — during the first two weeks of any cohort, from your account settings.',
+  },
+  {
+    q: 'Are courses self-paced?',
+    a: 'Core content is self-paced; cohort critiques, live Q&As, and certification exams run on a published schedule.',
+  },
+  {
+    q: 'Is there a student community?',
+    a: 'Yes — accepted students get access to private discussion channels and study groups for their cohort.',
+  },
 ];
+
+interface LandingPageProps {
+  query: string;
+  onQueryChange: (q: string) => void;
+  sessionEmail: string | null;
+  onSignOut: () => void;
+  onSignupClick: () => void;
+  onSigninClick: () => void;
+}
 
 export default function LandingPage({
   query,
@@ -52,32 +77,36 @@ export default function LandingPage({
   onSignupClick,
   onSigninClick,
 }: LandingPageProps) {
-  const [section, setSection] = useState<SectionId>('catalog');
+  const [section, setSection] = useState<SectionId>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [levelFilter, setLevelFilter] = useState<string | null>(null);
+  const [openCourse, setOpenCourse] = useState<Course | null>(null);
+  const { enrollments } = useEnrollment();
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return COURSE_LIST.filter((c) => {
-      if (levelFilter && c.level !== levelFilter) return false;
-      if (!q) return true;
-      return (
-        c.title.toLowerCase().includes(q) ||
-        c.description.toLowerCase().includes(q) ||
-        c.level.toLowerCase().includes(q) ||
-        c.tag.includes(q)
-      );
-    });
-  }, [query, levelFilter]);
+  const goTo = (id: SectionId) => {
+    setSection(id);
+    setSidebarOpen(false);
+  };
 
-  const byLevel = useMemo(
-    () => ({
-      Beginner: filtered.filter((c) => c.level === 'Beginner'),
-      Intermediate: filtered.filter((c) => c.level === 'Intermediate'),
-      Advanced: filtered.filter((c) => c.level === 'Advanced'),
-    }),
-    [filtered],
-  );
+  const content = useMemo(() => {
+    switch (section) {
+      case 'dashboard':
+        return (
+          <Dashboard
+            userName={sessionEmail?.split('@')[0] ?? null}
+            onOpenCourse={setOpenCourse}
+            onGoToCatalog={() => goTo('catalog')}
+          />
+        );
+      case 'catalog':
+        return <Catalog query={query} onOpenCourse={setOpenCourse} />;
+      case 'paths':
+        return <Paths onOpenCourse={setOpenCourse} />;
+      case 'certifications':
+        return <Certifications />;
+      default:
+        return null;
+    }
+  }, [section, query, sessionEmail]);
 
   return (
     <div className="flex min-h-screen bg-slate-50">
@@ -90,7 +119,7 @@ export default function LandingPage({
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4">
             <a href="#" className="flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-sm">
                 <Code2 size={18} />
               </span>
               <span className="text-sm font-bold tracking-tight text-slate-900">
@@ -110,18 +139,21 @@ export default function LandingPage({
             {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
-                onClick={() => {
-                  setSection(id);
-                  setSidebarOpen(false);
-                }}
-                className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                onClick={() => goTo(id)}
+                className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
                   section === id
-                    ? 'bg-blue-50 text-blue-700'
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm'
                     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                 }`}
               >
                 <Icon size={17} />
                 {label}
+                <ChevronRight
+                  size={14}
+                  className={`ml-auto transition-opacity ${
+                    section === id ? 'opacity-70' : 'opacity-0'
+                  }`}
+                />
               </button>
             ))}
           </nav>
@@ -145,7 +177,7 @@ export default function LandingPage({
               <div className="space-y-2">
                 <button
                   onClick={onSignupClick}
-                  className="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+                  className="w-full rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
                 >
                   Apply now
                 </button>
@@ -163,7 +195,7 @@ export default function LandingPage({
 
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/40 lg:hidden"
+          className="fixed inset-0 z-30 bg-slate-950/40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -174,10 +206,10 @@ export default function LandingPage({
           <div className="flex items-center gap-3 px-4 py-3 sm:px-6">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="rounded-lg border border-slate-300 p-2 text-slate-600 lg:hidden"
+              className="rounded-lg border border-slate-300 p-2 text-slate-600 transition-colors hover:bg-slate-50 lg:hidden"
               aria-label="Open menu"
             >
-              <LayoutDashboard size={16} />
+              <Menu size={16} />
             </button>
             <div className="relative flex-1">
               <Search
@@ -188,182 +220,38 @@ export default function LandingPage({
                 type="search"
                 value={query}
                 onChange={(e) => onQueryChange(e.target.value)}
-                placeholder="Search courses…"
+                placeholder="Search courses, topics, instructors…"
                 aria-label="Search courses"
                 className="w-full rounded-lg border border-slate-300 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
+            {sessionEmail && (
+              <span className="hidden items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 md:flex">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                {Object.keys(enrollments).length} active
+              </span>
+            )}
           </div>
         </header>
 
         <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-          {section === 'dashboard' && (
-            <section>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                Welcome back{sessionEmail ? '' : ' to CodeForge'}
-              </h1>
-              <p className="mt-2 text-sm text-slate-600">
-                {sessionEmail
-                  ? 'Continue where you left off, or explore a new track below.'
-                  : 'Sign in to track progress, or browse the full catalog below.'}
-              </p>
-              <div className="mt-6 grid gap-4 sm:grid-cols-3">
-                {[
-                  { label: 'Courses available', value: COURSE_LIST.length },
-                  { label: 'Learning paths', value: PATHS.length },
-                  { label: 'Total course hours', value: COURSE_LIST.reduce((s, c) => s + c.hours, 0) },
-                ].map((stat) => (
-                  <div key={stat.label} className="rounded-xl border border-slate-200 bg-white p-5">
-                    <div className="text-3xl font-bold text-slate-900">{stat.value}</div>
-                    <div className="mt-1 text-sm text-slate-500">{stat.label}</div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {section === 'catalog' && (
-            <section>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900">Course Catalog</h1>
-                <div className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white p-1">
-                  <SlidersHorizontal size={14} className="ml-1.5 text-slate-400" />
-                  {LEVELS.map((level) => (
-                    <button
-                      key={level}
-                      onClick={() => setLevelFilter((prev) => (prev === level ? null : level))}
-                      className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-                        levelFilter === level
-                          ? 'bg-blue-600 text-white'
-                          : 'text-slate-600 hover:bg-slate-100'
-                      }`}
-                    >
-                      {level}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {filtered.length === 0 ? (
-                <div className="mt-6 rounded-xl border border-dashed border-slate-300 bg-white py-16 text-center">
-                  <p className="text-sm font-medium text-slate-700">No courses match</p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Try a different keyword or clear the level filter.
-                  </p>
-                </div>
-              ) : (
-                <div className="mt-6 space-y-10">
-                  {LEVELS.map((level) =>
-                    byLevel[level].length > 0 ? (
-                      <div key={level}>
-                        <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-400">
-                          {level} · {byLevel[level].length} course
-                          {byLevel[level].length > 1 ? 's' : ''}
-                        </h2>
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                          {byLevel[level].map((course) => (
-                            <CourseCard key={course.id} course={course} />
-                          ))}
-                        </div>
-                      </div>
-                    ) : null,
-                  )}
-                </div>
-              )}
-            </section>
-          )}
-
-          {section === 'paths' && (
-            <section>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">Learning Paths</h1>
-              <p className="mt-2 text-sm text-slate-600">
-                Curated course sequences that take you from first principles to job-ready depth.
-              </p>
-              <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                {PATHS.map((path) => (
-                  <div
-                    key={path.title}
-                    className="rounded-xl border border-slate-200 bg-white p-5 transition-all hover:border-slate-300 hover:shadow-md"
-                  >
-                    <h3 className="font-bold text-slate-900">{path.title}</h3>
-                    <div className="mt-1 text-xs text-slate-500">
-                      {path.courses} courses · {path.hours} hours
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-1.5">
-                      {path.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-600"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {section === 'certifications' && (
-            <section>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">Certifications</h1>
-              <p className="mt-2 text-sm text-slate-600">
-                Proctored exams are offered at the end of each track. Passing earns a verified
-                certificate recognized by our hiring partners.
-              </p>
-              <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                {[
-                  { name: 'Certified Rust Systems Developer', level: 'Advanced' },
-                  { name: 'Certified Distributed Systems Architect', level: 'Advanced' },
-                  { name: 'Certified Full-Stack TypeScript Engineer', level: 'Intermediate' },
-                  { name: 'Certified CS Foundations', level: 'Beginner' },
-                ].map((cert) => (
-                  <div
-                    key={cert.name}
-                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-5"
-                  >
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100">
-                      <Award size={20} className="text-amber-600" />
-                    </span>
-                    <div>
-                      <div className="text-sm font-bold text-slate-900">{cert.name}</div>
-                      <div className="text-xs text-slate-500">{cert.level} level exam</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
+          {content}
 
           {section === 'help' && (
             <section className="max-w-2xl">
               <h1 className="text-2xl font-bold tracking-tight text-slate-900">Help Center</h1>
               <div className="mt-6 space-y-3">
-                {[
-                  {
-                    q: 'How do enrollments work?',
-                    a: 'Apply through the portal. Seats open per cohort and you are notified by email in order of application.',
-                  },
-                  {
-                    q: 'Can I switch tracks mid-cohort?',
-                    a: 'Yes, during the first two weeks of any cohort, from your account settings.',
-                  },
-                  {
-                    q: 'Are courses self-paced?',
-                    a: 'Core content is self-paced; cohort critiques and certification exams run on a schedule.',
-                  },
-                  {
-                    q: 'Is there a student community?',
-                    a: 'Yes — accepted students get access to the private discussion channels for their cohort.',
-                  },
-                ].map((item) => (
+                {HELP_ITEMS.map((item) => (
                   <details
                     key={item.q}
-                    className="rounded-xl border border-slate-200 bg-white p-4 [&_summary::-webkit-details-marker]:hidden"
+                    className="group rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:border-slate-300 [&_summary::-webkit-details-marker]:hidden"
                   >
-                    <summary className="cursor-pointer text-sm font-semibold text-slate-900">
+                    <summary className="flex cursor-pointer items-center justify-between text-sm font-semibold text-slate-900">
                       {item.q}
+                      <ChevronRight
+                        size={16}
+                        className="text-slate-400 transition-transform group-open:rotate-90"
+                      />
                     </summary>
                     <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.a}</p>
                   </details>
@@ -405,6 +293,10 @@ export default function LandingPage({
           </div>
         </footer>
       </div>
+
+      {openCourse && (
+        <CourseDetailModal course={openCourse} onClose={() => setOpenCourse(null)} />
+      )}
     </div>
   );
 }
