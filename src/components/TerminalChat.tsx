@@ -792,6 +792,12 @@ const handleSaveSettings = async () => {
         {visible.map((m) => {
           // Force all messages to align on the right side consistently
           const own = m.sender_id === userId;
+        console.log('MESSAGE ALIGNMENT:', {
+  message: m.content,
+  senderId: m.sender_id,
+  currentUserId: userId,
+  own: m.sender_id === userId,
+});
           const isSelected = selectedIds.includes(m.id);
           const isImage = m.content.startsWith('data:image');
           const isVideo = m.content.startsWith('data:video');
