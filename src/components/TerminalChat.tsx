@@ -877,6 +877,8 @@ export default function TerminalChat({ userId, onBack }: TerminalChatProps) {
                   <option value="vi">Tiếng Việt</option>
                   <option value="ja">日本語</option>
                   <option value="ko">한국어</option>
+                  <option value="fr">Français 🇫🇷</option>
+                  <option value="es">Español 🇪🇸</option>
                 </select>
               </div>
             </div>
