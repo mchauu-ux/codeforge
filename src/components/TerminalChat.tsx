@@ -789,15 +789,8 @@ const handleSaveSettings = async () => {
           </div>
         )}
 
-        {visible.map((m) => {
-          // Force all messages to align on the right side consistently
+      {visible.map((m) => {
           const own = m.sender_id === userId;
-        console.log('MESSAGE ALIGNMENT:', {
-  message: m.content,
-  senderId: m.sender_id,
-  currentUserId: userId,
-  own: m.sender_id === userId,
-});
           const isSelected = selectedIds.includes(m.id);
           const isImage = m.content.startsWith('data:image');
           const isVideo = m.content.startsWith('data:video');
@@ -814,10 +807,10 @@ const handleSaveSettings = async () => {
             <div
               key={m.id}
               className={`group flex items-center gap-3 px-2 ${
-  own ? 'justify-end' : 'justify-start'
-}`}
+                own ? 'justify-end' : 'justify-start'
+              }`}
             >
-              {selectMode && (
+              {selectMode && own && (
                 <button
                   type="button"
                   onClick={() => toggleSelectMessage(m.id)}
@@ -827,23 +820,41 @@ const handleSaveSettings = async () => {
                 </button>
               )}
 
-              {/* Strict uniform fixed width container so all messages & docs share the exact same right boundary */}
-<div className="flex flex-col gap-1 w-fit min-w-0 max-w-[min(75vw,420px)]">
-                <div className="relative flex items-end justify-end w-fit max-w-full">
-                  {/* Message / Media / File Item */}
+              <div className="flex flex-col gap-1 w-fit min-w-[60px] max-w-[min(75vw,420px)]">
+                <div className={`relative flex items-end w-fit max-w-full ${own ? 'justify-end' : 'justify-start'}`}>
+                  
+                  {/* Hover actions for LEFT messages (show on the RIGHT of the bubble) */}
+                  {!selectMode && !own && (
+                    <div className="absolute left-full ml-2 bottom-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shrink-0 z-10">
+                      <button
+                        onClick={() => togglePin(m)}
+                        title={m.is_pinned ? 'Unpin' : 'Pin'}
+                        className="rounded-xl p-2 bg-black/40 border border-current/20 opacity-70 hover:opacity-100 hover:text-amber-300 transition-colors shadow-sm"
+                      >
+                        {m.is_pinned ? <PinOff size={13} /> : <Pin size={13} />}
+                      </button>
+                      <button
+                        onClick={() => handleLocalDelete(m.id)}
+                        title={t('deleteForMe')}
+                        className="rounded-xl p-2 bg-black/40 border border-current/20 opacity-70 hover:opacity-100 hover:text-rose-400 transition-colors shadow-sm"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Message Bubble */}
                   <div
                     onClick={() => {
                       if (selectMode) toggleSelectMessage(m.id);
                     }}
                     className={`relative transition-all min-w-0 ${
-  isImage || isVideo
-    ? ''
-    : isFileCard
-    ? ''
-   : `w-fit max-w-full rounded-2xl p-3.5 text-sm shadow-md ${
-    own ? theme.bubbleOwn : theme.bubbleOther
-  } rounded-br-sm ${m.is_pinned ? 'ring-2 ring-amber-400/60' : ''}`
-} ${selectMode ? 'cursor-pointer hover:opacity-90' : ''}`}
+                      isImage || isVideo || isFileCard
+                        ? ''
+                        : `w-fit max-w-full rounded-2xl px-4 py-3 text-sm shadow-md ${
+                            own ? theme.bubbleOwn : theme.bubbleOther
+                          } ${own ? 'rounded-br-sm' : 'rounded-bl-sm'} ${m.is_pinned ? 'ring-2 ring-amber-400/60' : ''}`
+                    } ${selectMode ? 'cursor-pointer hover:opacity-90' : ''}`}
                   >
                     {isImage ? (
                       <img
@@ -860,9 +871,9 @@ const handleSaveSettings = async () => {
                         className="rounded-3xl max-h-80 w-full object-cover shadow-lg border border-current/10 bg-black/40"
                       />
                     ) : isFileCard ? (
-                      <div className="flex items-center gap-2 rounded-2xl border border-current/20 bg-black/40 p-2.5 backdrop-blur-md shadow-lg w-full min-w-0">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-pink-500/20 text-pink-300">
-                          <FileText size={16} />
+                      <div className="flex items-center gap-3 rounded-2xl border border-current/20 bg-black/40 p-3 backdrop-blur-md shadow-lg w-full min-w-0">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-pink-500/20 text-pink-300">
+                          <FileText size={20} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[10px] font-bold truncate text-current">{filePayload.name}</p>
@@ -888,16 +899,16 @@ const handleSaveSettings = async () => {
                           </a>
                         </div>
                       </div>
-                                       ) : (
-                      <p className="min-w-0 px-1 leading-relaxed whitespace-pre-wrap break-words">
+                    ) : (
+                      <p className="min-w-[20px] leading-relaxed whitespace-pre-wrap break-words text-center sm:text-left">
                         {m.content}
                       </p>
                     )}
                   </div>
 
-                  {/* Hover actions */}
-                  {!selectMode && (
-                  <div className="absolute right-full mr-2 bottom-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shrink-0">
+                  {/* Hover actions for RIGHT messages (show on the LEFT of the bubble) */}
+                  {!selectMode && own && (
+                    <div className="absolute right-full mr-2 bottom-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shrink-0 z-10">
                       <button
                         onClick={() => togglePin(m)}
                         title={m.is_pinned ? 'Unpin' : 'Pin'}
@@ -914,17 +925,25 @@ const handleSaveSettings = async () => {
                       </button>
                     </div>
                   )}
+
                 </div>
 
-                {/* Timestamp right underneath, perfectly aligned to the right edge */}
-              <div className={`flex items-center gap-1 text-[9px] opacity-50 w-full ${
-  own ? 'justify-end' : 'justify-start'
-}`}>
-  <span>{formatDateTime(m.created_at)}</span>
-  {m.is_pinned && (    <Pin size={9} className="text-amber-400 fill-amber-400 inline" />
-)}
-</div>
+                {/* Timestamp underneath */}
+                <div className={`flex items-center gap-1 text-[9px] opacity-50 w-full ${own ? 'justify-end' : 'justify-start'}`}>
+                  <span>{formatDateTime(m.created_at)}</span>
+                  {m.is_pinned && <Pin size={9} className="text-amber-400 fill-amber-400 inline" />}
+                </div>
               </div>
+
+              {selectMode && !own && (
+                <button
+                  type="button"
+                  onClick={() => toggleSelectMessage(m.id)}
+                  className="text-pink-400 hover:text-pink-300 transition-colors shrink-0"
+                >
+                  {isSelected ? <CheckSquare size={18} className="fill-pink-500/20" /> : <Square size={18} className="opacity-60" />}
+                </button>
+              )}
             </div>
           );
         })}
