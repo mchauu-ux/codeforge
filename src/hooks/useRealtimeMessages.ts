@@ -82,10 +82,17 @@ export function useRealtimeMessages(
   }, []);
 
   const sendMessage = async (content: string): Promise<{ error: string | null }> => {
-    if (!senderId) return { error: 'Not signed in' };
-    const { error } = await supabase.from('messages').insert({ content });
-    return { error: error ? error.message : null };
-  };
+  if (!senderId) return { error: 'Not signed in' };
+
+  const { error } = await supabase
+    .from('messages')
+    .insert({
+      content,
+      sender_id: senderId,
+    });
+
+  return { error: error ? error.message : null };
+};
 
   const togglePin = async (msg: ChatMessage): Promise<void> => {
     const { error } = await supabase
