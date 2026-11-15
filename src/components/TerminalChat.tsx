@@ -539,7 +539,6 @@ export default function TerminalChat({ userId, onBack }: TerminalChatProps) {
             </span>
             <div>
               <h1 className="text-sm font-bold tracking-wide">{chatTitle}</h1>
-              <p className="text-[11px] opacity-70">{t('subtitle')}</p>
             </div>
           </div>
         </div>
