@@ -822,7 +822,9 @@ const handleSaveSettings = async () => {
               )}
 
               {/* Strict uniform fixed width container so all messages & docs share the exact same right boundary */}
-<div className="flex flex-col gap-1 w-fit min-w-0 max-w-[min(75vw,420px)]">
+<div className={`flex flex-col gap-1 w-fit min-w-0 max-w-[min(75vw,420px)] ${
+  own ? 'items-end' : 'items-start'
+}`}>
                 <div className="relative flex items-end justify-end w-fit max-w-full">
                   {/* Message / Media / File Item */}
                   <div
