@@ -9,15 +9,6 @@ interface TerminalChatProps {
 
 type ThemeKey = 'cozy' | 'cyber' | 'matcha' | 'sakura';
 type LangKey = 'en' | 'vi' | 'ja' | 'ko' | 'fr' | 'es';
-// Editable chat name, persisted in localStorage
-const [chatTitle, setChatTitle] = useState(() => {
-  return localStorage.getItem('secret_chat_title') || 'Secret Sanctuary';
-});
-
-useEffect(() => {
-  localStorage.setItem('secret_chat_title', chatTitle);
-}, [chatTitle]);
-
 const STICKERS = [
   { id: '1', name: 'Happy Bunny', symbol: '(๑>◡<๑)' },
   { id: '2', name: 'Shy Blushing', symbol: '(*/ω＼*)' },
@@ -41,7 +32,6 @@ const TRANSLATIONS: Record<LangKey, Record<string, string>> = {
   en: {
     back: 'Back to Academy',
     title: 'Secret Sanctuary',
-    subtitle: 'Cozy encrypted space ✨',
     live: 'Live Connected',
     connecting: 'Connecting...',
     pinnedNotes: 'Pinned Notes',
@@ -58,6 +48,7 @@ const TRANSLATIONS: Record<LangKey, Record<string, string>> = {
     placeholder: 'Type a cute message or attach a file...',
     settings: 'Settings',
     language: 'Language',
+    chatName: 'Chat name',
     selectTheme: 'Select Theme',
     readDoc: 'Read document',
     downloadFile: 'Download file',
@@ -68,7 +59,6 @@ const TRANSLATIONS: Record<LangKey, Record<string, string>> = {
   vi: {
     back: 'Quay lại Học viện',
     title: 'Nơi Trú Ẩn Bí Mật',
-    subtitle: 'Không gian mã hóa ấm cúng ✨',
     live: 'Đã kết nối',
     connecting: 'Đang kết nối...',
     pinnedNotes: 'Ghi chú đã ghim',
@@ -85,6 +75,7 @@ const TRANSLATIONS: Record<LangKey, Record<string, string>> = {
     placeholder: 'Nhập tin nhắn dễ thương hoặc đính kèm tệp...',
     settings: 'Cài đặt',
     language: 'Ngôn ngữ',
+    chatName: 'Tên cuộc trò chuyện',
     selectTheme: 'Chọn Chủ đề',
     readDoc: 'Đọc tài liệu',
     downloadFile: 'Tải xuống',
@@ -95,7 +86,6 @@ const TRANSLATIONS: Record<LangKey, Record<string, string>> = {
   ja: {
     back: 'アカデミーに戻る',
     title: 'シークレット・サンクチュアリ',
-    subtitle: '心地よい暗号化スペース ✨',
     live: '接続済み',
     connecting: '接続中...',
     pinnedNotes: 'ピン留めされたメモ',
@@ -112,6 +102,7 @@ const TRANSLATIONS: Record<LangKey, Record<string, string>> = {
     placeholder: 'メッセージやファイルを送信...',
     settings: '設定',
     language: '言語',
+    chatName: 'チャット名',
     selectTheme: 'テーマを選択',
     readDoc: 'ドキュメントを読む',
     downloadFile: 'ファイルをダウンロード',
@@ -122,7 +113,6 @@ const TRANSLATIONS: Record<LangKey, Record<string, string>> = {
   ko: {
     back: '아카데미로 돌아가기',
     title: '시크릿 생추어리',
-    subtitle: '아늑한 암호화 공간 ✨',
     live: '실시간 연결됨',
     connecting: '연결 중...',
     pinnedNotes: '고정된 노트',
@@ -139,6 +129,7 @@ const TRANSLATIONS: Record<LangKey, Record<string, string>> = {
     placeholder: '메시지 또는 파일 입력...',
     settings: '설정',
     language: '언어',
+    chatName: '채팅 이름',
     selectTheme: '테마 선택',
     readDoc: '문서 읽기',
     downloadFile: '파일 다운로드',
@@ -149,7 +140,6 @@ const TRANSLATIONS: Record<LangKey, Record<string, string>> = {
     fr: {
     back: 'Retour à l’Académie',
     title: 'Sanctuaire Secret',
-    subtitle: 'Un espace sécurisé et chaleureux ✨',
     live: 'Connecté',
     connecting: 'Connexion...',
     pinnedNotes: 'Notes épinglées',
@@ -166,6 +156,7 @@ const TRANSLATIONS: Record<LangKey, Record<string, string>> = {
     placeholder: 'Écrivez un joli message ou joignez un fichier...',
     settings: 'Paramètres',
     language: 'Langue',
+    chatName: 'Nom de la conversation',
     selectTheme: 'Choisir un thème',
     readDoc: 'Lire le document',
     downloadFile: 'Télécharger le fichier',
@@ -176,7 +167,6 @@ const TRANSLATIONS: Record<LangKey, Record<string, string>> = {
   es: {
     back: 'Volver a la Academia',
     title: 'Santuario Secreto',
-    subtitle: 'Un espacio acogedor y cifrado ✨',
     live: 'Conectado',
     connecting: 'Conectando...',
     pinnedNotes: 'Notas fijadas',
@@ -193,6 +183,7 @@ const TRANSLATIONS: Record<LangKey, Record<string, string>> = {
     placeholder: 'Escribe un mensaje bonito o adjunta un archivo...',
     settings: 'Configuración',
     language: 'Idioma',
+    chatName: 'Nombre del chat',
     selectTheme: 'Seleccionar tema',
     readDoc: 'Leer documento',
     downloadFile: 'Descargar archivo',
@@ -263,6 +254,15 @@ const THEMES: Record<
 };
 
 export default function TerminalChat({ userId, onBack }: TerminalChatProps) {
+  // Editable chat name, persisted in localStorage
+  const [chatTitle, setChatTitle] = useState(() => {
+    return localStorage.getItem('secret_chat_title') || 'Secret Sanctuary';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('secret_chat_title', chatTitle);
+  }, [chatTitle]);
+
   const { messages, connected, sendMessage, togglePin } =
     useRealtimeMessages(userId, () => mountedRef.current);
   
@@ -870,6 +870,23 @@ export default function TerminalChat({ userId, onBack }: TerminalChatProps) {
             </div>
 
             <div className="p-6 space-y-4 text-xs">
+              {/* Editable chat name */}
+              <div className="space-y-2">
+                <label htmlFor="secret-chat-name" className="flex items-center gap-2 font-medium text-purple-200">
+                  <Sparkles size={16} className="text-pink-400" />
+                  <span>{t('chatName')}</span>
+                </label>
+                <input
+                  id="secret-chat-name"
+                  type="text"
+                  value={chatTitle}
+                  onChange={(e) => setChatTitle(e.target.value)}
+                  maxLength={40}
+                  placeholder="Secret Sanctuary"
+                  className="w-full rounded-xl border border-purple-500/30 bg-[#121118] px-3 py-2.5 text-white outline-none placeholder:text-white/30 focus:border-pink-500 shadow-inner"
+                />
+              </div>
+
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 font-medium text-purple-200">
                   <Globe size={16} className="text-pink-400" />
