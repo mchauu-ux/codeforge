@@ -1,46 +1,49 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 
 export interface ChatSettings {
-  id: string;
   title: string;
   avatar_url: string | null;
-  updated_at: string;
 }
 
 const DEFAULT_SETTINGS: ChatSettings = {
-  id: 'main',
   title: 'Secret Sanctuary',
   avatar_url: null,
-  updated_at: '',
 };
 
 export function useChatSettings() {
   const [settings, setSettings] = useState<ChatSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadSettings = useCallback(async () => {
+    const { data, error: loadError } = await supabase
+      .from('chat_settings')
+      .select('title, avatar_url')
+      .eq('id', 'main')
+      .maybeSingle();
+
+    if (loadError) {
+      setError(loadError.message);
+      setLoading(false);
+      return;
+    }
+
+    if (data) {
+      setSettings({
+        title: data.title ?? DEFAULT_SETTINGS.title,
+        avatar_url: data.avatar_url ?? null,
+      });
+    } else {
+      setSettings(DEFAULT_SETTINGS);
+    }
+
+    setError(null);
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
-    let cancelled = false;
-
-    const loadSettings = async () => {
-      const { data, error } = await supabase
-        .from('chat_settings')
-        .select('*')
-        .eq('id', 'main')
-        .maybeSingle();
-
-      if (cancelled) return;
-
-      if (error) {
-        console.error('Failed to load chat settings:', error.message);
-      } else if (data) {
-        setSettings(data as ChatSettings);
-      }
-
-      setLoading(false);
-    };
-
-    loadSettings();
+    void loadSettings();
 
     const channel = supabase
       .channel('shared-chat-settings')
@@ -53,67 +56,82 @@ export function useChatSettings() {
           filter: 'id=eq.main',
         },
         (payload) => {
-          if (payload.new && Object.keys(payload.new).length > 0) {
-            setSettings(payload.new as ChatSettings);
+          if (payload.eventType === 'DELETE') {
+            setSettings(DEFAULT_SETTINGS);
+            return;
           }
+
+          const row = payload.new as Partial<ChatSettings>;
+          setSettings({
+            title: row.title ?? DEFAULT_SETTINGS.title,
+            avatar_url: row.avatar_url ?? null,
+          });
         },
       )
       .subscribe();
 
     return () => {
-      cancelled = true;
-      supabase.removeChannel(channel);
+      void supabase.removeChannel(channel);
     };
-  }, []);
+  }, [loadSettings]);
 
-  const saveSharedSettings = async (
-    title: string,
-    avatarUrl: string | null,
-  ): Promise<{ error: string | null }> => {
-    const { error } = await supabase
-      .from('chat_settings')
-      .upsert(
-        {
-          id: 'main',
-          title,
-          avatar_url: avatarUrl,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'id' },
-      );
+  const saveSharedSettings = useCallback(
+    async (title: string, avatarUrl: string | null) => {
+      const cleanTitle = title.trim();
+      if (!cleanTitle) {
+        throw new Error('Chat name cannot be empty.');
+      }
 
-    return { error: error?.message ?? null };
-  };
+      const { error: saveError } = await supabase
+        .from('chat_settings')
+        .upsert(
+          {
+            id: 'main',
+            title: cleanTitle,
+            avatar_url: avatarUrl,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'id' },
+        );
 
-  const uploadSharedAvatar = async (
-    file: File,
-  ): Promise<{ url: string | null; error: string | null }> => {
-    const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-    const path = `shared/avatar-${Date.now()}.${extension}`;
+      if (saveError) throw saveError;
 
-    const { error } = await supabase.storage
+      setSettings({ title: cleanTitle, avatar_url: avatarUrl });
+    },
+    [],
+  );
+
+  const uploadSharedAvatar = useCallback(async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      throw new Error('Please choose an image file.');
+    }
+
+    const extension = file.name.split('.').pop()?.toLowerCase() || 'png';
+    const filePath = `shared/${crypto.randomUUID()}.${extension}`;
+
+    const { error: uploadError } = await supabase.storage
       .from('chat-avatars')
-      .upload(path, file, {
+      .upload(filePath, file, {
         cacheControl: '3600',
         upsert: false,
         contentType: file.type,
       });
 
-    if (error) {
-      return { url: null, error: error.message };
-    }
+    if (uploadError) throw uploadError;
 
     const { data } = supabase.storage
       .from('chat-avatars')
-      .getPublicUrl(path);
+      .getPublicUrl(filePath);
 
-    return { url: data.publicUrl, error: null };
-  };
+    return data.publicUrl;
+  }, []);
 
   return {
     settings,
     loading,
+    error,
     saveSharedSettings,
     uploadSharedAvatar,
+    refreshSettings: loadSettings,
   };
 }
