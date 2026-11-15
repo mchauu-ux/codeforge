@@ -538,7 +538,7 @@ export default function TerminalChat({ userId, onBack }: TerminalChatProps) {
               <Sparkles size={18} />
             </span>
             <div>
-              <h1 className="text-sm font-bold tracking-wide">{t('title')}</h1>
+              <h1 className="text-sm font-bold tracking-wide">{chatTitle}</h1>
               <p className="text-[11px] opacity-70">{t('subtitle')}</p>
             </div>
           </div>
