@@ -8,7 +8,7 @@ interface TerminalChatProps {
 }
 
 type ThemeKey = 'cozy' | 'cyber' | 'matcha' | 'sakura';
-type LangKey = 'en' | 'vi' | 'ja' | 'ko';
+type LangKey = 'en' | 'vi' | 'ja' | 'ko' | 'fr' | 'es';
 
 const STICKERS = [
   { id: '1', name: 'Happy Bunny', symbol: '(๑>◡<๑)' },
