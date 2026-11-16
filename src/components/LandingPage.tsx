@@ -3,6 +3,7 @@ import {
   Code2,
   Search,
   LogOut,
+  Home as HomeIcon,
   LayoutDashboard,
   BookOpen,
   Layers,
@@ -14,9 +15,10 @@ import {
 } from 'lucide-react';
 import { COURSES as COURSE_LIST } from '../courses';
 import CourseCard from './CourseCard';
+import Home from './views/Home';
 import Dashboard from './views/Dashboard';
 
-export type SectionId = 'dashboard' | 'catalog' | 'paths' | 'certifications' | 'help' | 'settings';
+export type SectionId = 'home' | 'dashboard' | 'catalog' | 'paths' | 'certifications' | 'help' | 'settings';
 
 const LEVELS = ['Beginner', 'Intermediate', 'Advanced'] as const;
 
@@ -27,9 +29,11 @@ interface LandingPageProps {
   onSignOut: () => void;
   onSignupClick: () => void;
   onSigninClick: () => void;
+  onLaunchTerminal: () => void;
 }
 
 const NAV_ITEMS: { id: SectionId; label: string; icon: typeof LayoutDashboard }[] = [
+  { id: 'home', label: 'Home', icon: HomeIcon },
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'catalog', label: 'Course Catalog', icon: BookOpen },
   { id: 'paths', label: 'Learning Paths', icon: Layers },
@@ -52,8 +56,9 @@ export default function LandingPage({
   onSignOut,
   onSignupClick,
   onSigninClick,
+  onLaunchTerminal,
 }: LandingPageProps) {
-  const [section, setSection] = useState<SectionId>('dashboard');
+  const [section, setSection] = useState<SectionId>('home');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [levelFilter, setLevelFilter] = useState<string | null>(null);
 
@@ -218,6 +223,16 @@ export default function LandingPage({
         </header>
 
         <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+          {section === 'home' && (
+            <Home
+              userName={sessionEmail?.split('@')[0] ?? null}
+              query={query}
+              onQueryChange={onQueryChange}
+              onExploreCatalog={() => setSection('catalog')}
+              onLaunchTerminal={onLaunchTerminal}
+            />
+          )}
+
           {section === 'dashboard' && (
             <Dashboard
               userName={sessionEmail?.split('@')[0] ?? null}
