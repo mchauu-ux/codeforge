@@ -1,11 +1,10 @@
-import { Search, ArrowRight, TerminalSquare, FlaskConical, Radio, GraduationCap } from 'lucide-react';
+import { Search, ArrowRight, FlaskConical, Radio, GraduationCap } from 'lucide-react';
 
 interface HomeProps {
   userName: string | null;
   query: string;
   onQueryChange: (q: string) => void;
   onExploreCatalog: () => void;
-  onLaunchTerminal: () => void;
 }
 
 const TICKER_ITEMS = [
@@ -47,7 +46,6 @@ export default function Home({
   query,
   onQueryChange,
   onExploreCatalog,
-  onLaunchTerminal,
 }: HomeProps) {
   const firstName = userName?.trim().length ? userName[0].toUpperCase() + userName.slice(1) : null;
 
@@ -109,17 +107,6 @@ export default function Home({
               <ArrowRight size={16} />
             </button>
           </div>
-
-          <button
-            onClick={onLaunchTerminal}
-            className="group mt-4 inline-flex items-center gap-2 rounded-lg border border-slate-700/80 bg-slate-900/60 px-4 py-2 font-mono text-xs text-emerald-400 backdrop-blur transition-all hover:border-emerald-500/40 hover:bg-slate-900"
-          >
-            <TerminalSquare size={14} />
-            Launch Terminal
-            <span className="text-slate-600 transition-colors group-hover:text-emerald-500/60">
-              $_
-            </span>
-          </button>
         </div>
       </section>
 

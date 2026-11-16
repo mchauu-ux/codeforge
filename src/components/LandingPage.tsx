@@ -29,7 +29,6 @@ interface LandingPageProps {
   onSignOut: () => void;
   onSignupClick: () => void;
   onSigninClick: () => void;
-  onLaunchTerminal: () => void;
 }
 
 const NAV_ITEMS: { id: SectionId; label: string; icon: typeof LayoutDashboard }[] = [
@@ -56,7 +55,6 @@ export default function LandingPage({
   onSignOut,
   onSignupClick,
   onSigninClick,
-  onLaunchTerminal,
 }: LandingPageProps) {
   const [section, setSection] = useState<SectionId>('home');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -229,7 +227,6 @@ export default function LandingPage({
               query={query}
               onQueryChange={onQueryChange}
               onExploreCatalog={() => setSection('catalog')}
-              onLaunchTerminal={onLaunchTerminal}
             />
           )}
 

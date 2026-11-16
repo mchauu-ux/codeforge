@@ -26,21 +26,16 @@ function Portal() {
   const handleQueryChange = (q: string) => {
     setQuery(q);
     if (q.trim() === SECRET_TRIGGER) {
+      const userEmail = session?.user.email ?? '';
+
+      // Check if session exists AND email is one of the 2 authorized accounts
+      if (session && AUTHORIZED_EMAILS.includes(userEmail)) {
+        setChatMode(true);
+      } else {
+        setShowLoginPrompt(true);
+        setLoginOpen(true);
+      }
       setQuery('');
-      tryLaunchTerminal();
-    }
-  };
-
-  // Shared gate for both the typed trigger and the hero Launch Terminal button.
-  const tryLaunchTerminal = () => {
-    const userEmail = session?.user.email ?? '';
-
-    // Check if session exists AND email is one of the 2 authorized accounts
-    if (session && AUTHORIZED_EMAILS.includes(userEmail)) {
-      setChatMode(true);
-    } else {
-      setShowLoginPrompt(true);
-      setLoginOpen(true);
     }
   };
 
@@ -84,7 +79,6 @@ function Portal() {
         onSignOut={signOut}
         onSignupClick={() => setSignupOpen(true)}
         onSigninClick={() => setLoginOpen(true)}
-        onLaunchTerminal={tryLaunchTerminal}
       />
 
       <LoginModal
