@@ -1,5 +1,6 @@
 import { BookOpen, Clock3, PlayCircle } from 'lucide-react';
 import type { Course } from '../types';
+import { useEnrollment } from '../context/EnrollmentContext';
 
 const LEVEL_STYLES: Record<Course['level'], string> = {
   Beginner: 'bg-green-100 text-green-700',
@@ -12,6 +13,8 @@ interface CourseCardProps {
 }
 
 export default function CourseCard({ course }: CourseCardProps) {
+  const { enroll, progressOf } = useEnrollment();
+  const progress = progressOf(course.id, course.lessons);
   return (
     <article className="group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg">
       <div className="flex h-28 items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900">
@@ -46,9 +49,15 @@ export default function CourseCard({ course }: CourseCardProps) {
             <Clock3 size={12} />
             {course.hours}h
           </span>
-          <button className="ml-auto flex items-center gap-1 font-medium text-blue-600 transition-colors hover:text-blue-700">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              enroll(course.id);
+            }}
+            className="ml-auto flex items-center gap-1 font-medium text-blue-600 transition-colors hover:text-blue-700"
+          >
             <PlayCircle size={13} />
-            Start
+            {progress > 0 ? `${progress}%` : 'Start'}
           </button>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { GraduationCap, X, LogIn } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { EnrollmentProvider } from './context/EnrollmentContext';
 import LandingPage from './components/LandingPage';
 import LoginModal from './components/LoginModal';
 import SignupModal from './components/SignupModal';
@@ -117,7 +118,9 @@ function Portal() {
 export default function App() {
   return (
     <AuthProvider>
-      <Portal />
+      <EnrollmentProvider>
+        <Portal />
+      </EnrollmentProvider>
     </AuthProvider>
   );
 }

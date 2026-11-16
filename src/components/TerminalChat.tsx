@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Send, Pin, PinOff, Trash2, Loader2, ArrowLeft, ChevronDown, Sparkles, Heart, Palette, CheckSquare, Square, Image as ImageIcon, Video as VideoIcon, FileText, Download, Eye, Settings, X, Globe, Smile, Upload } from 'lucide-react';
+import { Send, Pin, PinOff, Trash2, Loader2, ArrowLeft, ChevronDown, Sparkles, Heart, Palette, CheckSquare, Square, Image as ImageIcon, FileText, Download, Eye, Settings, X, Globe, Smile, Upload } from 'lucide-react';
 import { useRealtimeMessages } from '../hooks/useRealtimeMessages';
 import { useChatSettings } from '../hooks/useChatSettings';
 

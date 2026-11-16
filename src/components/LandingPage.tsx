@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { COURSES as COURSE_LIST } from '../courses';
 import CourseCard from './CourseCard';
+import Dashboard from './views/Dashboard';
 
 export type SectionId = 'dashboard' | 'catalog' | 'paths' | 'certifications' | 'help' | 'settings';
 
@@ -52,7 +53,7 @@ export default function LandingPage({
   onSignupClick,
   onSigninClick,
 }: LandingPageProps) {
-  const [section, setSection] = useState<SectionId>('catalog');
+  const [section, setSection] = useState<SectionId>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [levelFilter, setLevelFilter] = useState<string | null>(null);
 
@@ -198,28 +199,11 @@ export default function LandingPage({
 
         <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
           {section === 'dashboard' && (
-            <section>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                Welcome back{sessionEmail ? '' : ' to CodeForge'}
-              </h1>
-              <p className="mt-2 text-sm text-slate-600">
-                {sessionEmail
-                  ? 'Continue where you left off, or explore a new track below.'
-                  : 'Sign in to track progress, or browse the full catalog below.'}
-              </p>
-              <div className="mt-6 grid gap-4 sm:grid-cols-3">
-                {[
-                  { label: 'Courses available', value: COURSE_LIST.length },
-                  { label: 'Learning paths', value: PATHS.length },
-                  { label: 'Total course hours', value: COURSE_LIST.reduce((s, c) => s + c.hours, 0) },
-                ].map((stat) => (
-                  <div key={stat.label} className="rounded-xl border border-slate-200 bg-white p-5">
-                    <div className="text-3xl font-bold text-slate-900">{stat.value}</div>
-                    <div className="mt-1 text-sm text-slate-500">{stat.label}</div>
-                  </div>
-                ))}
-              </div>
-            </section>
+            <Dashboard
+              userName={sessionEmail?.split('@')[0] ?? null}
+              onGoToCatalog={() => setSection('catalog')}
+              onOpenCourse={() => {}}
+            />
           )}
 
           {section === 'catalog' && (
