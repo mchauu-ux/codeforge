@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Send, Pin, PinOff, Trash2, Loader2, ArrowLeft, ChevronDown, Sparkles, Heart, Palette, CheckSquare, Square, Image as ImageIcon, FileText, Download, Eye, Settings, X, Globe, Smile, Upload } from 'lucide-react';
+import { Send, Pin, PinOff, Trash2, Loader2, ArrowLeft, ChevronDown, Sparkles, Heart, Palette, CheckSquare, Square, Image as ImageIcon, FileText, Download, Eye, Settings, X, Globe, Smile, Upload, RotateCcw } from 'lucide-react';
 import { useRealtimeMessages } from '../hooks/useRealtimeMessages';
 import { useChatSettings } from '../hooks/useChatSettings';
 
@@ -42,6 +42,7 @@ const TRANSLATIONS: Record<LangKey, Record<string, string>> = {
     selectToDelete: 'Select to Delete',
     cancelSelect: 'Cancel Select',
     deleteForMe: 'Delete For Me',
+    recall: 'Recall Message',
     selected: 'selected',
     filterPinned: 'Filter Pinned',
     showingPinned: 'Showing Pinned Only',
@@ -69,6 +70,7 @@ const TRANSLATIONS: Record<LangKey, Record<string, string>> = {
     selectToDelete: 'Chọn để xóa',
     cancelSelect: 'Hủy chọn',
     deleteForMe: 'Xóa đối với tôi',
+    recall: 'Thu hồi tin nhắn',
     selected: 'đã chọn',
     filterPinned: 'Lọc ghim',
     showingPinned: 'Hiển thị mục đã ghim',
@@ -96,6 +98,7 @@ const TRANSLATIONS: Record<LangKey, Record<string, string>> = {
     selectToDelete: '選択して削除',
     cancelSelect: '選択を解除',
     deleteForMe: '自分のみ削除',
+    recall: 'メッセージを取り消す',
     selected: '選択中',
     filterPinned: 'ピン留めをフィルター',
     showingPinned: 'ピン留めのみ表示',
@@ -123,6 +126,7 @@ const TRANSLATIONS: Record<LangKey, Record<string, string>> = {
     selectToDelete: '선택하여 삭제',
     cancelSelect: '선택 취소',
     deleteForMe: '나에게서만 삭제',
+    recall: '메시지 회수',
     selected: '개 선택됨',
     filterPinned: '고정 필터',
     showingPinned: '고정된 항목만 표시',
@@ -150,6 +154,7 @@ const TRANSLATIONS: Record<LangKey, Record<string, string>> = {
     selectToDelete: 'Sélectionner pour supprimer',
     cancelSelect: 'Annuler la sélection',
     deleteForMe: 'Supprimer pour moi',
+    recall: 'Rappeler le message',
     selected: 'sélectionné(s)',
     filterPinned: 'Filtrer les éléments épinglés',
     showingPinned: 'Affichage des éléments épinglés uniquement',
@@ -177,6 +182,7 @@ const TRANSLATIONS: Record<LangKey, Record<string, string>> = {
     selectToDelete: 'Seleccionar para eliminar',
     cancelSelect: 'Cancelar selección',
     deleteForMe: 'Eliminar para mí',
+    recall: 'Retirar mensaje',
     selected: 'seleccionado(s)',
     filterPinned: 'Filtrar elementos fijados',
     showingPinned: 'Mostrando solo elementos fijados',
@@ -379,7 +385,7 @@ const handleSaveSettings = async () => {
 };
 
 
-  const { messages, connected, sendMessage, togglePin } =
+  const { messages, connected, sendMessage, togglePin, deleteMessage } =
     useRealtimeMessages(userId, () => mountedRef.current);
   
   const [draft, setDraft] = useState('');
@@ -603,6 +609,10 @@ const handleSaveSettings = async () => {
 
   const handleLocalDelete = (id: string) => {
     setHiddenIds((prev) => [...prev, id]);
+  };
+
+  const handleRecall = async (id: string) => {
+    await deleteMessage(id);
   };
 
   const handleBatchLocalDelete = () => {
@@ -892,26 +902,6 @@ const handleSaveSettings = async () => {
                       </p>
                     )}
                   </div>
-
-                  {/* Hover actions */}
-                  {!selectMode && (
-                  <div className="absolute right-full mr-2 bottom-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shrink-0">
-                      <button
-                        onClick={() => togglePin(m)}
-                        title={m.is_pinned ? 'Unpin' : 'Pin'}
-                        className="rounded-xl p-2 bg-black/40 border border-current/20 opacity-70 hover:opacity-100 hover:text-amber-300 transition-colors shadow-sm"
-                      >
-                        {m.is_pinned ? <PinOff size={13} /> : <Pin size={13} />}
-                      </button>
-                      <button
-                        onClick={() => handleLocalDelete(m.id)}
-                        title={t('deleteForMe')}
-                        className="rounded-xl p-2 bg-black/40 border border-current/20 opacity-70 hover:opacity-100 hover:text-rose-400 transition-colors shadow-sm"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  )}
                 </div>
 
                 {/* Timestamp right underneath, perfectly aligned to the right edge */}
@@ -921,6 +911,35 @@ const handleSaveSettings = async () => {
 )}
 </div>
               </div>
+
+              {/* Hover actions, always to the right of the bubble */}
+              {!selectMode && (
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                  <button
+                    onClick={() => togglePin(m)}
+                    title={m.is_pinned ? 'Unpin' : 'Pin'}
+                    className="rounded-xl p-2 bg-black/40 border border-current/20 opacity-70 hover:opacity-100 hover:text-amber-300 transition-colors shadow-sm"
+                  >
+                    {m.is_pinned ? <PinOff size={13} /> : <Pin size={13} />}
+                  </button>
+                  {own && (
+                    <button
+                      onClick={() => handleRecall(m.id)}
+                      title={t('recall')}
+                      className="rounded-xl p-2 bg-black/40 border border-current/20 opacity-70 hover:opacity-100 hover:text-sky-300 transition-colors shadow-sm"
+                    >
+                      <RotateCcw size={13} />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleLocalDelete(m.id)}
+                    title={t('deleteForMe')}
+                    className="rounded-xl p-2 bg-black/40 border border-current/20 opacity-70 hover:opacity-100 hover:text-rose-400 transition-colors shadow-sm"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              )}
             </div>
           );
         })}
