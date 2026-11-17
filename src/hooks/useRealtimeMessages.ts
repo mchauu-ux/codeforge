@@ -81,9 +81,12 @@ export function useRealtimeMessages(
     };
   }, []);
 
-  const sendMessage = async (content: string): Promise<{ error: string | null }> => {
+ const sendMessage = async (content: string): Promise<{ error: string | null }> => {
     if (!senderId) return { error: 'Not signed in' };
-    const { error } = await supabase.from('messages').insert({ content });
+    const { error } = await supabase.from('messages').insert({ 
+      content, 
+      sender_id: senderId // 👈 Add this so it matches your RLS policy!
+    });
     return { error: error ? error.message : null };
   };
 
