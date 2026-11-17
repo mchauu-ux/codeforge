@@ -17,6 +17,7 @@ import { COURSES as COURSE_LIST } from '../courses';
 import CourseCard from './CourseCard';
 import Home from './views/Home';
 import Dashboard from './views/Dashboard';
+import Paths from './views/Paths';
 
 export type SectionId = 'home' | 'dashboard' | 'catalog' | 'paths' | 'certifications' | 'help' | 'settings';
 
@@ -39,13 +40,6 @@ const NAV_ITEMS: { id: SectionId; label: string; icon: typeof LayoutDashboard }[
   { id: 'certifications', label: 'Certifications', icon: Award },
   { id: 'help', label: 'Help Center', icon: HelpCircle },
   { id: 'settings', label: 'Settings', icon: Settings },
-];
-
-const PATHS = [
-  { title: 'Backend Engineer', courses: 4, hours: 128, tags: ['rust', 'databases', 'distributed'] },
-  { title: 'Platform Engineer', courses: 3, hours: 96, tags: ['distributed', 'security'] },
-  { title: 'Language Tooling', courses: 3, hours: 88, tags: ['compilers', 'rust'] },
-  { title: 'Product Engineer', courses: 3, hours: 102, tags: ['typescript', 'fundamentals'] },
 ];
 
 export default function LandingPage({
@@ -289,37 +283,7 @@ export default function LandingPage({
             </section>
           )}
 
-          {section === 'paths' && (
-            <section>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">Learning Paths</h1>
-              <p className="mt-2 text-sm text-slate-600">
-                Curated course sequences that take you from first principles to job-ready depth.
-              </p>
-              <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                {PATHS.map((path) => (
-                  <div
-                    key={path.title}
-                    className="rounded-xl border border-slate-200 bg-white p-5 transition-all hover:border-slate-300 hover:shadow-md"
-                  >
-                    <h3 className="font-bold text-slate-900">{path.title}</h3>
-                    <div className="mt-1 text-xs text-slate-500">
-                      {path.courses} courses · {path.hours} hours
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-1.5">
-                      {path.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-600"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
+          {section === 'paths' && <Paths query={query} onQueryChange={onQueryChange} />}
 
           {section === 'certifications' && (
             <section>
