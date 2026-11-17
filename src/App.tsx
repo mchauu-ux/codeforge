@@ -31,11 +31,17 @@ function Portal() {
       // Check if session exists AND email is one of the 2 authorized accounts
       if (session && AUTHORIZED_EMAILS.includes(userEmail)) {
         setChatMode(true);
+        setQuery('');
+      } else if (!session) {
+        // Signed-out visitors: silently treat the phrase as a normal search.
+        // Clearing the query leaves the empty-search state ("No courses match").
+        setQuery('');
       } else {
+        // Signed in but not on the allowlist.
         setShowLoginPrompt(true);
         setLoginOpen(true);
+        setQuery('');
       }
-      setQuery('');
     }
   };
 
