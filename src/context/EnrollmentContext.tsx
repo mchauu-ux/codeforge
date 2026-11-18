@@ -4,6 +4,7 @@ import {
   useContext,
   useMemo,
   useState,
+  useEffect,
   type ReactNode,
 } from 'react';
 
@@ -23,7 +24,22 @@ interface EnrollmentContextValue {
 const EnrollmentContext = createContext<EnrollmentContextValue | null>(null);
 
 export function EnrollmentProvider({ children }: { children: ReactNode }) {
-  const [enrollments, setEnrollments] = useState<Record<number, Enrollment>>({});
+  const [enrollments, setEnrollments] = useState<Record<number, Enrollment>>(() => {
+    try {
+      const saved = localStorage.getItem('codeforge-enrollments');
+      return saved ? (JSON.parse(saved) as Record<number, Enrollment>) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('codeforge-enrollments', JSON.stringify(enrollments));
+    } catch (error) {
+      console.warn('Could not persist enrollment progress:', error);
+    }
+  }, [enrollments]);
 
   const enroll = useCallback((courseId: number) => {
     setEnrollments((prev) =>
