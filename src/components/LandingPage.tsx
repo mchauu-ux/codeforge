@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { COURSES as COURSE_LIST } from '../courses';
 import CourseCard from './CourseCard';
-import Home from './views/Home';
+import Home from './views/Home.tsx';
 import Dashboard from './views/Dashboard';
 import Paths from './views/Paths';
 import Help from './views/Help';
