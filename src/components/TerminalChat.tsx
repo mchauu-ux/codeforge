@@ -42,7 +42,22 @@
     return value.replace(/\\s+/g, ' ').slice(0, 120) || 'Message';
   }
 
-  const MESSAGE_REACTION_EMOJIS = ['❤️', '😂', '😭', '😮', '👍', '🔥'];
+  const DEFAULT_QUICK_EMOJIS = ['❤️', '😂', '😭', '😮', '👍', '🔥'];
+
+// Broad Unicode emoji catalogue with searchable names; users can personalize the quick row.
+const EMOJI_CATALOG = [
+  ['😀','grinning face'],['😃','smiley'],['😄','smile'],['😁','beaming'],['😆','laughing'],['😅','sweat smile'],['🤣','rolling on the floor laughing'],['😂','tears of joy'],['🙂','slightly smiling'],['🙃','upside down'],['😉','wink'],['😊','blush'],['😇','angel'],['🥰','hearts'],['😍','heart eyes'],['🤩','star struck'],['😘','kiss'],['😗','kissing'],['☺️','smiling'],['😚','kissing closed eyes'],['😙','kissing smiling eyes'],['🥲','smiling tear'],['😋','yum'],['😛','tongue'],['😜','winking tongue'],['🤪','zany'],['😝','squinting tongue'],['🤑','money mouth'],['🤗','hug'],['🤭','hand over mouth'],['🫢','open eyes hand over mouth'],['🫣','peeking'],['🤫','shush'],['🤔','thinking'],['🫡','salute'],['🤐','zipper mouth'],['🤨','raised eyebrow'],['😐','neutral'],['😑','expressionless'],['😶','no mouth'],['🫥','dotted line face'],['😏','smirk'],['😒','unamused'],['🙄','eye roll'],['😬','grimace'],['😮‍💨','sigh'],['🤥','lying'],['😌','relieved'],['😔','pensive'],['😪','sleepy'],['🤤','drooling'],['😴','sleeping'],['😷','mask'],['🤒','thermometer'],['🤕','bandage'],['🤢','nauseated'],['🤮','vomit'],['🤧','sneeze'],['🥵','hot'],['🥶','cold'],['🥴','woozy'],['😵','dizzy'],['🤯','exploding head'],['🤠','cowboy'],['🥳','party'],['🥸','disguised'],['😎','sunglasses'],['🤓','nerd'],['🧐','monocle'],['😕','confused'],['🫤','diagonal mouth'],['😟','worried'],['🙁','slightly frowning'],['☹️','frowning'],['😮','open mouth'],['😯','hushed'],['😲','astonished'],['😳','flushed'],['🥺','pleading'],['🥹','holding back tears'],['😦','frowning open mouth'],['😧','anguished'],['😨','fearful'],['😰','anxious sweat'],['😥','sad relieved'],['😢','cry'],['😭','loudly crying'],['😱','screaming'],['😖','confounded'],['😣','persevere'],['😞','disappointed'],['😓','downcast sweat'],['😩','weary'],['😫','tired'],['🥱','yawning'],['😤','triumph'],['😡','pouting'],['😠','angry'],['🤬','cursing'],['😈','smiling devil'],['👿','angry devil'],['💀','skull'],['☠️','skull crossbones'],['💩','poop'],['🤡','clown'],['👻','ghost'],['👽','alien'],['🤖','robot'],['🎃','jack o lantern'],['😺','grinning cat'],['😸','grinning cat eyes'],['😹','joy cat'],['😻','heart eyes cat'],['😼','smirk cat'],['😽','kissing cat'],['🙀','weary cat'],['😿','crying cat'],['😾','pouting cat'],
+  ['👋','wave'],['🤚','raised back hand'],['🖐️','hand fingers splayed'],['✋','raised hand'],['🖖','vulcan'],['🫱','rightwards hand'],['🫲','leftwards hand'],['🫳','palm down'],['🫴','palm up'],['👌','ok'],['🤌','pinched fingers'],['🤏','pinching'],['✌️','victory'],['🤞','crossed fingers'],['🫰','hand with index finger and thumb crossed'],['🤟','love you'],['🤘','horns'],['🤙','call me'],['👈','point left'],['👉','point right'],['👆','point up'],['👇','point down'],['☝️','index up'],['👍','thumbs up'],['👎','thumbs down'],['✊','fist'],['👊','oncoming fist'],['🤛','left fist'],['🤜','right fist'],['👏','clap'],['🙌','raised hands'],['🫶','heart hands'],['👐','open hands'],['🤲','palms up'],['🤝','handshake'],['🙏','pray'],['✍️','writing'],['💅','nail polish'],['🤳','selfie'],['💪','flex'],['🦾','mechanical arm'],['🦿','mechanical leg'],['🦵','leg'],['🦶','foot'],['👂','ear'],['🦻','ear hearing aid'],['👃','nose'],['🧠','brain'],['🫀','anatomical heart'],['🫁','lungs'],['🦷','tooth'],['🦴','bone'],['👀','eyes'],['👁️','eye'],['👅','tongue'],['👄','mouth'],
+  ['❤️','red heart'],['🧡','orange heart'],['💛','yellow heart'],['💚','green heart'],['💙','blue heart'],['🩵','light blue heart'],['💜','purple heart'],['🤎','brown heart'],['🖤','black heart'],['🩶','grey heart'],['🤍','white heart'],['💔','broken heart'],['❤️‍🔥','heart on fire'],['❤️‍🩹','mending heart'],['💕','two hearts'],['💞','revolving hearts'],['💓','beating heart'],['💗','growing heart'],['💖','sparkling heart'],['💘','heart arrow'],['💝','heart ribbon'],['💟','heart decoration'],['❣️','heart exclamation'],['💌','love letter'],['💋','kiss mark'],['💯','hundred'],['💢','anger'],['💥','collision'],['💫','dizzy'],['💦','sweat droplets'],['💨','dash'],['🕳️','hole'],['💬','speech'],['👁️‍🗨️','eye speech bubble'],['🗨️','left speech bubble'],['🗯️','anger bubble'],['💭','thought bubble'],['💤','zzz'],
+  ['🐶','dog'],['🐱','cat'],['🐭','mouse'],['🐹','hamster'],['🐰','rabbit'],['🦊','fox'],['🐻','bear'],['🐼','panda'],['🐨','koala'],['🐯','tiger'],['🦁','lion'],['🐮','cow'],['🐷','pig'],['🐸','frog'],['🐵','monkey'],['🙈','see no evil'],['🙉','hear no evil'],['🙊','speak no evil'],['🐔','chicken'],['🐧','penguin'],['🐦','bird'],['🦆','duck'],['🦉','owl'],['🦇','bat'],['🐺','wolf'],['🐗','boar'],['🐴','horse'],['🦄','unicorn'],['🐝','bee'],['🦋','butterfly'],['🐌','snail'],['🐞','lady beetle'],['🐜','ant'],['🪲','beetle'],['🕷️','spider'],['🦂','scorpion'],['🐢','turtle'],['🐍','snake'],['🦎','lizard'],['🦖','t rex'],['🦕','sauropod'],['🐙','octopus'],['🦑','squid'],['🦐','shrimp'],['🦀','crab'],['🐡','blowfish'],['🐠','tropical fish'],['🐟','fish'],['🐬','dolphin'],['🐳','whale'],['🦈','shark'],['🐊','crocodile'],['🐅','tiger'],['🐆','leopard'],['🦓','zebra'],['🦍','gorilla'],['🦧','orangutan'],['🐘','elephant'],['🦛','hippo'],['🦏','rhino'],['🐪','camel'],['🦒','giraffe'],['🦘','kangaroo'],['🦬','bison'],['🐄','cow'],['🐎','horse'],['🐖','pig'],['🐑','sheep'],['🦙','llama'],['🐐','goat'],['🦌','deer'],['🐕','dog'],['🐈','cat'],['🐓','rooster'],['🦃','turkey'],['🦚','peacock'],['🦜','parrot'],['🦢','swan'],['🦩','flamingo'],['🕊️','dove'],['🐇','rabbit'],['🦝','raccoon'],['🦨','skunk'],['🦡','badger'],['🦦','otter'],['🦥','sloth'],['🐁','mouse'],['🐀','rat'],['🐿️','chipmunk'],['🦔','hedgehog'],
+  ['🌸','cherry blossom'],['🌹','rose'],['🌺','hibiscus'],['🌻','sunflower'],['🌼','blossom'],['🌷','tulip'],['🪻','hyacinth'],['🌱','seedling'],['🌲','evergreen tree'],['🌳','deciduous tree'],['🌴','palm tree'],['🌵','cactus'],['🍀','four leaf clover'],['🍁','maple leaf'],['🍂','fallen leaf'],['🍃','leaf fluttering'],['🪴','potted plant'],['🌾','sheaf of rice'],['🌿','herb'],['☘️','shamrock'],['🍄','mushroom'],['🌞','sun face'],['🌝','full moon face'],['🌛','first quarter moon face'],['🌜','last quarter moon face'],['🌚','new moon face'],['🌕','full moon'],['🌙','crescent moon'],['⭐','star'],['🌟','glowing star'],['✨','sparkles'],['⚡','lightning'],['🔥','fire'],['🌈','rainbow'],['☀️','sun'],['⛅','sun behind cloud'],['🌤️','sun behind small cloud'],['🌧️','rain cloud'],['⛈️','thunder cloud'],['❄️','snowflake'],['☃️','snowman'],['🌊','water wave'],
+  ['🍏','green apple'],['🍎','red apple'],['🍐','pear'],['🍊','orange'],['🍋','lemon'],['🍌','banana'],['🍉','watermelon'],['🍇','grapes'],['🍓','strawberry'],['🫐','blueberries'],['🍈','melon'],['🍒','cherries'],['🍑','peach'],['🥭','mango'],['🍍','pineapple'],['🥥','coconut'],['🥝','kiwi'],['🍅','tomato'],['🍆','eggplant'],['🥑','avocado'],['🥦','broccoli'],['🥬','leafy green'],['🥒','cucumber'],['🌶️','hot pepper'],['🫑','bell pepper'],['🌽','corn'],['🥕','carrot'],['🧄','garlic'],['🧅','onion'],['🥔','potato'],['🍠','sweet potato'],['🥐','croissant'],['🥯','bagel'],['🍞','bread'],['🥖','baguette'],['🧀','cheese'],['🥚','egg'],['🍳','cooking'],['🧈','butter'],['🥞','pancakes'],['🧇','waffle'],['🥓','bacon'],['🍔','burger'],['🍟','fries'],['🍕','pizza'],['🌭','hot dog'],['🥪','sandwich'],['🌮','taco'],['🌯','burrito'],['🫔','tamale'],['🥗','salad'],['🍝','spaghetti'],['🍜','ramen'],['🍲','pot of food'],['🍛','curry rice'],['🍣','sushi'],['🍱','bento'],['🥟','dumpling'],['🍤','fried shrimp'],['🍙','rice ball'],['🍚','cooked rice'],['🍘','rice cracker'],['🍥','fish cake'],['🥠','fortune cookie'],['🥮','moon cake'],['🍡','dango'],['🍧','shaved ice'],['🍨','ice cream'],['🍦','soft ice cream'],['🥧','pie'],['🧁','cupcake'],['🍰','cake'],['🎂','birthday cake'],['🍮','custard'],['🍭','lollipop'],['🍬','candy'],['🍫','chocolate'],['🍿','popcorn'],['🍩','doughnut'],['🍪','cookie'],['🌰','chestnut'],['🥜','peanuts'],['☕','coffee'],['🫖','teapot'],['🍵','tea'],['🧋','bubble tea'],['🥤','cup with straw'],['🧃','juice box'],['🧉','mate'],['🍶','sake'],['🍺','beer'],['🥂','clinking glasses'],['🍷','wine'],['🥛','milk'],['🍼','baby bottle'],
+  ['⚽','soccer'],['🏀','basketball'],['🏈','football'],['⚾','baseball'],['🥎','softball'],['🎾','tennis'],['🏐','volleyball'],['🏉','rugby'],['🥏','flying disc'],['🎱','pool 8 ball'],['🏓','ping pong'],['🏸','badminton'],['🏒','hockey'],['🥅','goal net'],['⛳','golf'],['🏹','bow and arrow'],['🎣','fishing'],['🤿','diving mask'],['🥊','boxing glove'],['🥋','martial arts'],['🎽','running shirt'],['🛹','skateboard'],['🛼','roller skate'],['🛷','sled'],['⛸️','ice skate'],['🥌','curling stone'],['🎿','skis'],['⛷️','skier'],['🏂','snowboard'],['🏋️','weightlifting'],['🤼','wrestling'],['🤸','cartwheel'],['⛹️','bouncing ball'],['🤺','fencing'],['🏇','horse racing'],['🧘','lotus position'],['🏄','surfing'],['🏊','swimming'],['🚴','cycling'],['🚵','mountain biking'],['🎮','video game'],['🕹️','joystick'],['🎯','bullseye'],['🎲','dice'],['🧩','puzzle'],['♟️','chess pawn'],['🎭','performing arts'],['🎨','artist palette'],['🎼','musical score'],['🎤','microphone'],['🎧','headphones'],['🎹','piano'],['🥁','drum'],['🎷','saxophone'],['🎺','trumpet'],['🎸','guitar'],['🪕','banjo'],['🎻','violin'],['🎬','clapper'],['🎟️','admission tickets'],['🎫','ticket'],['🎪','circus'],['🎉','party popper'],['🎊','confetti'],['🎈','balloon'],['🎁','gift'],['🏆','trophy'],['🥇','gold medal'],['🥈','silver medal'],['🥉','bronze medal'],['🏅','sports medal'],['🎖️','military medal'],['🎀','ribbon'],['🪄','magic wand'],['🪅','pinata'],['🧸','teddy bear'],['🪁','kite'],['🪀','yo yo'],['🪩','mirror ball'],
+  ['🚗','car'],['🚕','taxi'],['🚌','bus'],['🚎','trolleybus'],['🏎️','racing car'],['🚓','police car'],['🚑','ambulance'],['🚒','fire engine'],['🚚','delivery truck'],['🚲','bicycle'],['🛴','scooter'],['🛵','motor scooter'],['🏍️','motorcycle'],['✈️','airplane'],['🛫','airplane departure'],['🛬','airplane arrival'],['🚀','rocket'],['🛸','flying saucer'],['🚁','helicopter'],['🚢','ship'],['⛵','sailboat'],['🚤','speedboat'],['🚂','locomotive'],['🚆','train'],['🚇','metro'],['🚉','station'],['🚦','traffic light'],['🗺️','world map'],['🗽','statue of liberty'],['🗼','tokyo tower'],['🏰','castle'],['🏯','japanese castle'],['🏟️','stadium'],['🎡','ferris wheel'],['🎢','roller coaster'],['🏖️','beach'],['🏝️','desert island'],['🏕️','camping'],['⛰️','mountain'],['🏔️','snow mountain'],['🌋','volcano'],['🗻','mount fuji'],['🏠','house'],['🏡','house garden'],['🏢','office building'],['🏫','school'],['🏥','hospital'],['🏦','bank'],['🏨','hotel'],['🏪','convenience store'],['🏬','department store'],['🏛️','classical building'],['⛪','church'],['🕌','mosque'],['🛕','hindu temple'],['🕍','synagogue'],['⛩️','shinto shrine'],['🕋','kaaba'],['⛲','fountain'],['⛺','tent'],['🌃','night with stars'],['🌆','cityscape'],['🌇','sunset'],['🌉','bridge at night'],
+  ['⌚','watch'],['📱','mobile phone'],['💻','laptop'],['⌨️','keyboard'],['🖥️','desktop computer'],['🖨️','printer'],['🖱️','computer mouse'],['🖲️','trackball'],['💽','computer disk'],['💾','floppy disk'],['💿','cd'],['📀','dvd'],['📷','camera'],['📸','camera flash'],['📹','video camera'],['🎥','movie camera'],['📞','telephone'],['☎️','phone'],['📺','television'],['📻','radio'],['🎙️','studio microphone'],['⏰','alarm clock'],['⌛','hourglass'],['⏳','hourglass not done'],['📡','satellite antenna'],['🔋','battery'],['🪫','low battery'],['🔌','electric plug'],['💡','light bulb'],['🔦','flashlight'],['🕯️','candle'],['🧯','fire extinguisher'],['🛢️','oil drum'],['💸','money with wings'],['💵','dollar banknote'],['💴','yen banknote'],['💶','euro banknote'],['💷','pound banknote'],['💰','money bag'],['💳','credit card'],['🧾','receipt'],['💎','gem stone'],['⚖️','balance scale'],['🔧','wrench'],['🪛','screwdriver'],['🔨','hammer'],['⚒️','hammer pick'],['🛠️','tools'],['⛏️','pick'],['🔩','nut bolt'],['⚙️','gear'],['🧲','magnet'],['🪜','ladder'],['🧰','toolbox'],['🧪','test tube'],['🧫','petri dish'],['🧬','dna'],['🔬','microscope'],['🔭','telescope'],['📚','books'],['📖','open book'],['📝','memo'],['✏️','pencil'],['🖊️','pen'],['🖋️','fountain pen'],['📎','paperclip'],['🔒','locked'],['🔓','unlocked'],['🔑','key'],['🗝️','old key'],['🔨','hammer'],['🧹','broom'],['🧺','basket'],['🧻','roll of paper'],['🪣','bucket'],['🧼','soap'],['🪥','toothbrush'],['🧽','sponge'],['🧴','lotion bottle'],['🛏️','bed'],['🛋️','couch'],['🚪','door'],['🪞','mirror'],['🪟','window'],['🪑','chair'],['🚽','toilet'],['🚿','shower'],['🛁','bathtub'],['🧸','teddy bear'],['🖼️','framed picture'],['🪆','nesting dolls'],
+  ['❤️','red heart'],['☮️','peace'],['✝️','cross'],['☯️','yin yang'],['♈','aries'],['♉','taurus'],['♊','gemini'],['♋','cancer'],['♌','leo'],['♍','virgo'],['♎','libra'],['♏','scorpio'],['♐','sagittarius'],['♑','capricorn'],['♒','aquarius'],['♓','pisces'],['🔴','red circle'],['🟠','orange circle'],['🟡','yellow circle'],['🟢','green circle'],['🔵','blue circle'],['🟣','purple circle'],['⚫','black circle'],['⚪','white circle'],['🟤','brown circle'],['🔺','red triangle'],['🔻','red down triangle'],['💠','diamond'],['🔷','blue diamond'],['🔶','orange diamond'],['🔹','small blue diamond'],['🔸','small orange diamond'],['▪️','small black square'],['▫️','small white square'],['◾','medium small black square'],['◽','medium small white square'],['⬛','black large square'],['⬜','white large square'],['🟥','red square'],['🟧','orange square'],['🟨','yellow square'],['🟩','green square'],['🟦','blue square'],['🟪','purple square'],['🟫','brown square'],['✅','check mark'],['❌','cross mark'],['❓','question mark'],['❗','exclamation'],['‼️','double exclamation'],['⁉️','exclamation question'],['💤','zzz'],['🔔','bell'],['🔕','bell slash'],['🔆','bright'],['🔅','dim'],['🔱','trident'],['⚜️','fleur de lis'],['🔰','japanese symbol beginner'],['♻️','recycling'],['⚠️','warning'],['🚫','prohibited'],['💮','white flower'],['🏁','chequered flag'],['🚩','triangular flag'],['🎌','crossed flags'],['🏳️','white flag'],['🏴','black flag'],['🏳️‍🌈','rainbow flag'],['🏳️‍⚧️','transgender flag'],
+] as const;
+const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]) => [emoji, [emoji, name] as const])).values());
 
   type TerminalPalette = {
     background: string;
@@ -444,6 +459,14 @@
     const [sendError, setSendError] = useState<string | null>(null);
     const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
     const [reactionMenuFor, setReactionMenuFor] = useState<string | null>(null);
+    const [activeToolbarFor, setActiveToolbarFor] = useState<string | null>(null);
+    const [emojiSearch, setEmojiSearch] = useState('');
+    const [editingQuickEmojis, setEditingQuickEmojis] = useState(false);
+    const quickEmojiKey = `codeforge_quick_emojis_${userId}`;
+    const [quickEmojis, setQuickEmojis] = useState<string[]>(() => {
+      try { return JSON.parse(localStorage.getItem(`codeforge_quick_emojis_${userId}`) || 'null') || DEFAULT_QUICK_EMOJIS; }
+      catch { return DEFAULT_QUICK_EMOJIS; }
+    });
     const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
     const [editDraft, setEditDraft] = useState('');
     const [historyFor, setHistoryFor] = useState<string | null>(null);
@@ -510,6 +533,10 @@
     useEffect(() => {
       localStorage.setItem('secret_chat_theme', themeKey);
     }, [themeKey]);
+
+    useEffect(() => {
+      localStorage.setItem(quickEmojiKey, JSON.stringify(quickEmojis));
+    }, [quickEmojis, quickEmojiKey]);
 
     const scrollRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -754,7 +781,7 @@
       >
         {/* Header */}
         <header
-          className={`flex items-center justify-between border-b px-4 sm:px-6 py-3 backdrop-blur-md shadow-lg relative z-20 ${
+          className={`group flex items-center justify-between border-b px-4 sm:px-6 py-3 backdrop-blur-md shadow-lg relative z-20 ${
             isTerminal ? 'border-emerald-400/20 bg-black/35' : `${theme.border} ${theme.headerBg} py-4`
           }`}
         >
@@ -789,8 +816,7 @@
             )}
           </div>
 
-          <div className="flex items-center gap-3 text-xs">
-            {/* Select Mode Toggle */}
+          <div className={`flex items-center gap-3 text-xs transition-opacity ${isTerminal ? 'opacity-100 sm:pointer-events-none sm:opacity-0 sm:group-hover:pointer-events-auto sm:group-hover:opacity-100 sm:group-focus-within:pointer-events-auto sm:group-focus-within:opacity-100' : ''}`}>
             <button
               onClick={() => {
                 setSelectMode((v) => !v);
@@ -804,15 +830,14 @@
               <span className={isTerminal ? 'hidden sm:inline' : ''}>{selectMode ? t('cancelSelect') : t('selectToDelete')}</span>
             </button>
 
-            {/* Settings Button */}
-            <button
+            {!isTerminal && <button
               onClick={openSettings}
               className={`flex items-center gap-1.5 border px-3 py-1.5 text-[11px] sm:text-xs font-medium transition-all ${isTerminal ? 'rounded-md border-emerald-400/25 bg-emerald-400/5 hover:bg-emerald-400/10' : 'rounded-full border-current/20 bg-current/5 hover:bg-current/10'}`}
               title={t('settings')}
             >
               <Settings size={14} />
               <span className="hidden sm:inline">{t('settings')}</span>
-            </button>
+            </button>}
 
             {/* Theme Switcher Button & Dropdown */}
             <div className="relative">
@@ -909,6 +934,7 @@
         <div
           ref={scrollRef}
           onScroll={handleScroll}
+          onClick={(event) => { if (!(event.target as HTMLElement).closest('[data-message-row]')) { setActiveToolbarFor(null); setReactionMenuFor(null); } }}
           className={`flex-1 overflow-y-auto px-4 sm:px-6 ${isTerminal ? 'pt-5 pb-6 space-y-3 bg-black/10' : 'pt-16 pb-6 space-y-4 bg-gradient-to-b from-transparent via-black/10 to-transparent'}`}
         >
           <div className={`${isTerminal ? 'mb-4 border-b border-current/10 pb-3 text-left' : 'text-center my-3'}`}>
@@ -950,7 +976,7 @@
             } catch {}
             const isFileCard = filePayload && filePayload.data;
             const messageReactions = reactions.filter((reaction) => reaction.message_id === m.id);
-            const reactionCounts = MESSAGE_REACTION_EMOJIS.map((emoji) => ({
+            const reactionCounts = [...new Set(messageReactions.map((reaction) => reaction.emoji))].map((emoji) => ({
               emoji,
               count: messageReactions.filter((reaction) => reaction.emoji === emoji).length,
               mine: messageReactions.some((reaction) => reaction.emoji === emoji && reaction.user_id === userId),
@@ -959,7 +985,7 @@
             return (
             <div
     key={m.id}
-    className={`group relative flex items-start gap-2 px-2 ${own ? 'justify-end' : 'justify-start'}`}
+    className={`group relative flex items-start gap-2 px-2 ${isTerminal ? 'justify-start' : own ? 'justify-end' : 'justify-start'}`} data-message-row={m.id}
   >
                 {selectMode && (
                   <button
@@ -972,8 +998,8 @@
                 )}
 
                 {/* Strict uniform fixed width container so all messages & docs share the exact same right boundary */}
-  <div className={`relative flex w-full max-w-[min(78vw,560px)] min-w-0 flex-col gap-1 ${own ? 'items-end' : 'items-start'}`}>
-                <div className={`relative flex w-full items-start max-w-full ${own ? 'justify-end' : 'justify-start'} `}>
+  <div className={`relative flex min-w-0 flex-col gap-1 ${isTerminal ? 'w-fit max-w-[min(78vw,560px)] items-start' : `w-full max-w-[min(78vw,560px)] ${own ? 'items-end' : 'items-start'}`} `}>
+                <div className={`relative flex w-full items-start max-w-full ${isTerminal ? 'justify-start' : own ? 'justify-end' : 'justify-start'} `}>
                     {isTerminal && !own && (
                       <span className="mr-2 shrink-0 text-sm font-bold leading-6" style={{ color: terminalPalette.accent }} aria-hidden="true">&gt;</span>
                     )}
@@ -981,6 +1007,7 @@
                     <div
                       onClick={() => {
                         if (selectMode) toggleSelectMessage(m.id);
+                        else if (isTerminal) setActiveToolbarFor((current) => current === m.id ? null : m.id);
                       }}
                       className={`relative transition-all min-w-0 ${
                         isTerminal
@@ -1063,14 +1090,14 @@
                   </div>
 
                   {/* Timestamp right underneath, perfectly aligned to the right edge */}
-                <div className={`flex items-center gap-1 text-[9px] opacity-55 w-full ${own ? 'justify-end' : 'justify-start'} ${isTerminal ? 'font-mono' : ''}`}>
+                <div className={`flex items-center gap-1 text-[9px] opacity-55 w-full ${isTerminal ? 'justify-start' : own ? 'justify-end' : 'justify-start'} ${isTerminal ? 'font-mono' : ''}`}>
     <span>{isTerminal ? `[${formatDateTime(m.created_at)}]` : formatDateTime(m.created_at)}</span>
     {m.updated_at && m.updated_at !== m.created_at && !isRecalled && <span className="italic">· Edited</span>}
     {m.is_pinned && (    <Pin size={9} className="text-amber-400 fill-amber-400 inline" />
   )}
   </div>
                   {reactionCounts.length > 0 && (
-                    <div className={`flex flex-wrap gap-1 ${own ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`flex flex-wrap gap-1 ${isTerminal ? 'justify-start' : own ? 'justify-end' : 'justify-start'}`}>
                       {reactionCounts.map(({ emoji, count, mine }) => (
                         <button key={emoji} type="button" onClick={() => void toggleReaction(m.id, emoji)}
                           className={`rounded-full border px-2 py-0.5 text-xs transition-colors ${mine ? 'border-sky-400/70 bg-sky-400/15' : 'border-current/20 bg-black/10'}`}
@@ -1084,11 +1111,17 @@
 
                 {/* Compact hover toolbar sits outside the message bubble. */}
                 {!selectMode && !isRecalled && (
-                  <div className={`absolute -top-2 z-20 -translate-y-full flex items-center gap-1 rounded-xl border border-current/15 bg-slate-950/95 p-1 shadow-xl opacity-0 pointer-events-none transition-opacity group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto ${own ? 'right-0' : 'left-0'}`}>
+                  <div className={`absolute top-0 z-20 flex items-center gap-1 rounded-xl border border-current/15 bg-slate-950/95 p-1 shadow-xl transition-opacity ${isTerminal ? 'left-full ml-2' : `-top-2 -translate-y-full ${own ? 'right-0' : 'left-0'}`} ${activeToolbarFor === m.id ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto'}`}>
                     <button type="button" onClick={() => { setReplyTo(m); inputRef.current?.focus(); }} title="Reply" aria-label="Reply to message" className="rounded-lg p-1.5 hover:bg-white/10 hover:text-sky-300"><Reply size={13} /></button>
                     <div className="relative">
-                      <button type="button" onClick={() => setReactionMenuFor(reactionMenuFor === m.id ? null : m.id)} title="React" aria-label="React to message" className="rounded-lg p-1.5 hover:bg-white/10 hover:text-amber-300"><Smile size={13} /></button>
-                      {reactionMenuFor === m.id && <div className="absolute bottom-full right-0 z-30 mb-2 flex gap-1 rounded-xl border border-current/20 bg-slate-950 p-2 shadow-xl">{MESSAGE_REACTION_EMOJIS.map((emoji) => <button key={emoji} type="button" onClick={() => { void toggleReaction(m.id, emoji); setReactionMenuFor(null); }} className="rounded-lg p-1.5 text-lg hover:bg-white/15" aria-label={'React ' + emoji}>{emoji}</button>)}</div>}
+                      <button type="button" onClick={() => { setReactionMenuFor(reactionMenuFor === m.id ? null : m.id); setEmojiSearch(''); }} title="React" aria-label="React to message" className="rounded-lg p-1.5 hover:bg-white/10 hover:text-amber-300"><Smile size={13} /></button>
+                      {reactionMenuFor === m.id && <div className="absolute top-full left-0 z-40 mt-2 w-72 rounded-xl border border-current/20 bg-slate-950 p-3 text-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
+                        <div className="mb-2 flex items-center justify-between gap-2"><span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Quick reactions</span><button type="button" onClick={() => setEditingQuickEmojis((value) => !value)} className="text-[10px] text-sky-300 hover:text-sky-200">{editingQuickEmojis ? 'Done' : 'Customize'}</button></div>
+                        <div className="mb-2 flex flex-wrap gap-1">{quickEmojis.map((emoji) => <button key={emoji} type="button" onClick={() => { if (editingQuickEmojis) setQuickEmojis((current) => current.filter((item) => item !== emoji)); else { void toggleReaction(m.id, emoji); setReactionMenuFor(null); } }} className="rounded-lg p-1.5 text-xl hover:bg-white/10" title={editingQuickEmojis ? 'Remove from quick bar' : `React ${emoji}`}>{emoji}</button>)}</div>
+                        {editingQuickEmojis && <p className="mb-2 text-[10px] text-slate-500">Select emojis below to add or remove them from your quick bar.</p>}
+                        <input value={emojiSearch} onChange={(event) => setEmojiSearch(event.target.value)} placeholder="Search emojis..." className="mb-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white outline-none placeholder:text-slate-500 focus:border-sky-400/50" />
+                        <div className="grid max-h-48 grid-cols-8 gap-1 overflow-y-auto">{UNIQUE_EMOJI_CATALOG.filter(([emoji, name]) => !emojiSearch || name.includes(emojiSearch.toLowerCase()) || emoji.includes(emojiSearch)).map(([emoji, name]) => <button key={`${emoji}-${name}`} type="button" onClick={() => { if (editingQuickEmojis) setQuickEmojis((current) => current.includes(emoji) ? current.filter((item) => item !== emoji) : [...current, emoji]); else { void toggleReaction(m.id, emoji); setReactionMenuFor(null); } }} className={`rounded-md p-1 text-lg hover:bg-white/15 ${quickEmojis.includes(emoji) ? 'bg-sky-500/20' : ''}`} title={name}>{emoji}</button>)}</div>
+                      </div>}
                     </div>
                     {own && canEditMessage(m) && !isImage && !isVideo && !isFileCard && <button type="button" onClick={() => beginEdit(m)} title="Edit (within 24 hours)" aria-label="Edit message" className="rounded-lg p-1.5 hover:bg-white/10 hover:text-emerald-300"><Pencil size={13} /></button>}
                     {edits.some((edit) => edit.message_id === m.id) && <button type="button" onClick={() => setHistoryFor(historyFor === m.id ? null : m.id)} title="View edit history" aria-label="View edit history" className="rounded-lg p-1.5 hover:bg-white/10 hover:text-violet-300"><History size={13} /></button>}
