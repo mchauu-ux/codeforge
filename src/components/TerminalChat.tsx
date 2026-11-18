@@ -1,13 +1,48 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Send, Pin, PinOff, Trash2, Loader2, ArrowLeft, ChevronDown, Sparkles, Heart, Palette, CheckSquare, Square, Image as ImageIcon, FileText, Download, Eye, Settings, X, Globe, Smile, Upload, RotateCcw } from 'lucide-react';
+import { Send, Pin, PinOff, Trash2, Loader2, ArrowLeft, ChevronDown, Sparkles, Heart, Palette, CheckSquare, Square, Image as ImageIcon, FileText, Download, Eye, Settings, X, Globe, Smile, Upload, RotateCcw, Reply } from 'lucide-react';
 import { useRealtimeMessages } from '../hooks/useRealtimeMessages';
 import { useChatSettings } from '../hooks/useChatSettings';
+import type { ChatMessage } from '../types';
 
 interface TerminalChatProps {
   userId: string;
   onBack: () => void;
   displayMode?: 'standard' | 'terminal';
 }
+
+
+type ReplyEnvelope = {
+  __codeforge_reply_v1: true;
+  replyToId: string;
+  replyToContent: string;
+  replyToSenderId: string;
+  message: string;
+};
+
+function parseReplyEnvelope(content: string): ReplyEnvelope | null {
+  try {
+    const value = JSON.parse(content);
+    return value?.__codeforge_reply_v1 === true && typeof value.message === 'string'
+      ? value as ReplyEnvelope
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function summarizeReplyContent(content: string): string {
+  const nested = parseReplyEnvelope(content);
+  const value = nested?.message ?? content;
+  if (value.startsWith('data:image')) return '📷 Photo';
+  if (value.startsWith('data:video')) return '🎥 Video';
+  try {
+    const file = JSON.parse(value);
+    if (file?.name && file?.data) return `📎 ${file.name}`;
+  } catch { /* regular text */ }
+  return value.replace(/\\s+/g, ' ').slice(0, 120) || 'Message';
+}
+
+const MESSAGE_REACTION_EMOJIS = ['❤️', '😂', '😭', '😮', '👍', '🔥'];
 
 type TerminalPalette = {
   background: string;
@@ -401,12 +436,14 @@ const handleSaveSettings = async () => {
 };
 
 
-  const { messages, connected, sendMessage, togglePin, deleteMessage } =
+  const { messages, reactions, connected, sendMessage, toggleReaction, togglePin, deleteMessage } =
     useRealtimeMessages(userId, () => mountedRef.current);
   
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
+  const [reactionMenuFor, setReactionMenuFor] = useState<string | null>(null);
   const [showPinnedOnly, setShowPinnedOnly] = useState(false);
   const [atBottom, setAtBottom] = useState(true);
 
@@ -516,8 +553,15 @@ const handleSaveSettings = async () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const content = draft.trim();
-    if (!content || sending) return;
+    const messageText = draft.trim();
+    if (!messageText || sending) return;
+    const content = replyTo ? JSON.stringify({
+      __codeforge_reply_v1: true,
+      replyToId: replyTo.id,
+      replyToContent: summarizeReplyContent(replyTo.content),
+      replyToSenderId: replyTo.sender_id,
+      message: messageText,
+    } as ReplyEnvelope) : messageText;
     setSending(true);
     setSendError(null);
     const { error } = await sendMessage(content);
@@ -525,6 +569,7 @@ const handleSaveSettings = async () => {
       setSendError(error);
     } else {
       setDraft('');
+      setReplyTo(null);
       setAtBottom(true);
     }
     setSending(false);
@@ -814,7 +859,7 @@ const handleSaveSettings = async () => {
             {t('pinnedNotes')} ({pinned.length})
           </div>
           {pinned.map((m) => {
-            let desc = m.content;
+            let desc = summarizeReplyContent(m.content);
             if (m.content.startsWith('data:image')) desc = '[Photo]';
             else if (m.content.startsWith('data:video')) desc = '[Video]';
             else if (m.content.startsWith('{')) {
@@ -865,16 +910,22 @@ const handleSaveSettings = async () => {
      
           const own = m.sender_id === userId;
           const isSelected = selectedIds.includes(m.id);
-          const isImage = m.content.startsWith('data:image');
-          const isVideo = m.content.startsWith('data:video');
-          
+          const replyEnvelope = parseReplyEnvelope(m.content);
+          const messageContent = replyEnvelope?.message ?? m.content;
+          const isImage = messageContent.startsWith('data:image');
+          const isVideo = messageContent.startsWith('data:video');
+
           let filePayload = null;
           try {
-            if (m.content.startsWith('{')) {
-              filePayload = JSON.parse(m.content);
-            }
+            if (messageContent.startsWith('{')) filePayload = JSON.parse(messageContent);
           } catch {}
           const isFileCard = filePayload && filePayload.data;
+          const messageReactions = reactions.filter((reaction) => reaction.message_id === m.id);
+          const reactionCounts = MESSAGE_REACTION_EMOJIS.map((emoji) => ({
+            emoji,
+            count: messageReactions.filter((reaction) => reaction.emoji === emoji).length,
+            mine: messageReactions.some((reaction) => reaction.emoji === emoji && reaction.user_id === userId),
+          })).filter((reaction) => reaction.count > 0);
 
           return (
           <div
@@ -913,17 +964,23 @@ const handleSaveSettings = async () => {
                     } ${selectMode ? 'cursor-pointer hover:opacity-90' : ''}`}
                     style={isTerminal ? { color: own ? terminalPalette.primaryText : terminalPalette.secondaryText } : undefined}
                   >
+                    {replyEnvelope && (
+                      <div className={`mb-2 border-l-2 px-2 py-1 text-[11px] opacity-75 ${isTerminal ? 'border-current/50 bg-current/5' : 'border-pink-300/60 bg-black/10 rounded-r-lg'}`}>
+                        <div className="font-semibold">{replyEnvelope.replyToSenderId === userId ? 'You' : 'Replying to message'}</div>
+                        <div className="truncate max-w-full">{replyEnvelope.replyToContent.startsWith('data:image') ? '📷 Photo' : replyEnvelope.replyToContent.startsWith('data:video') ? '🎥 Video' : replyEnvelope.replyToContent.slice(0, 100)}</div>
+                      </div>
+                    )}
                     {isImage ? (
                       <img
-                        src={m.content}
+                        src={messageContent}
                         alt="Shared media"
-                        onClick={() => setPreviewImage(m.content)}
+                        onClick={() => setPreviewImage(messageContent)}
                         className="rounded-3xl max-h-80 w-full object-cover cursor-pointer hover:opacity-95 transition-all shadow-lg border border-current/10"
                         title={t('clickToView')}
                       />
                     ) : isVideo ? (
                       <video
-                        src={m.content}
+                        src={messageContent}
                         controls
                         className="rounded-3xl max-h-80 w-full object-cover shadow-lg border border-current/10 bg-black/40"
                       />
@@ -958,7 +1015,7 @@ const handleSaveSettings = async () => {
                       </div>
                                        ) : (
                       <p className="min-w-0 px-1 leading-relaxed whitespace-pre-wrap break-words">
-                        {m.content}
+                        {messageContent}
                       </p>
                     )}
                   </div>
@@ -970,11 +1027,42 @@ const handleSaveSettings = async () => {
   {m.is_pinned && (    <Pin size={9} className="text-amber-400 fill-amber-400 inline" />
 )}
 </div>
+                {reactionCounts.length > 0 && (
+                  <div className={`flex flex-wrap gap-1 ${isTerminal ? 'pl-3' : ''}`}>
+                    {reactionCounts.map(({ emoji, count, mine }) => (
+                      <button key={emoji} type="button" onClick={() => void toggleReaction(m.id, emoji)}
+                        className={`rounded-full border px-2 py-0.5 text-xs transition-colors ${mine ? 'border-sky-400/70 bg-sky-400/15' : 'border-current/20 bg-black/10'}`}
+                        title={mine ? 'Remove your reaction' : 'React with ' + emoji}>
+                        {emoji} <span className="text-[10px]">{count}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Hover actions, always to the right of the bubble */}
               {!selectMode && (
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity shrink-0">
+                  <button type="button" onClick={() => { setReplyTo(m); inputRef.current?.focus(); }}
+                    title="Reply" aria-label="Reply to message"
+                    className={`p-2 bg-black/40 border border-current/20 hover:text-sky-300 transition-colors shadow-sm ${isTerminal ? 'rounded-md' : 'rounded-xl'}`}>
+                    <Reply size={13} />
+                  </button>
+                  <div className="relative">
+                    <button type="button" onClick={() => setReactionMenuFor(reactionMenuFor === m.id ? null : m.id)}
+                      title="React" aria-label="React to message"
+                      className={`p-2 bg-black/40 border border-current/20 hover:text-amber-300 transition-colors shadow-sm ${isTerminal ? 'rounded-md' : 'rounded-xl'}`}>
+                      <Smile size={13} />
+                    </button>
+                    {reactionMenuFor === m.id && (
+                      <div className="absolute right-0 bottom-full z-30 mb-2 flex gap-1 rounded-xl border border-current/20 bg-slate-950 p-2 shadow-xl">
+                        {MESSAGE_REACTION_EMOJIS.map((emoji) => (
+                          <button key={emoji} type="button" onClick={() => { void toggleReaction(m.id, emoji); setReactionMenuFor(null); }}
+                            className="rounded-lg p-1.5 text-lg hover:bg-white/15" aria-label={'React ' + emoji}>{emoji}</button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <button
                     onClick={() => togglePin(m)}
                     title={m.is_pinned ? 'Unpin' : 'Pin'}
@@ -1213,6 +1301,16 @@ const handleSaveSettings = async () => {
 
       {/* Input Bar */}
       <div className={`border-t p-3 sm:p-4 backdrop-blur-md relative z-20 ${isTerminal ? 'border-emerald-400/20 bg-black/35' : `${theme.border} ${theme.headerBg}`}`}>
+        {replyTo && (
+          <div className={`mb-3 flex items-center gap-3 rounded-xl border px-3 py-2 text-xs ${isTerminal ? 'border-emerald-400/25 bg-emerald-400/5' : 'border-pink-400/25 bg-pink-500/5'}`}>
+            <Reply size={14} className="shrink-0" />
+            <div className="min-w-0 flex-1">
+              <div className="font-semibold">Replying to {replyTo.sender_id === userId ? 'yourself' : 'message'}</div>
+              <div className="truncate opacity-70">{summarizeReplyContent(replyTo.content)}</div>
+            </div>
+            <button type="button" onClick={() => setReplyTo(null)} className="rounded p-1 opacity-70 hover:opacity-100" aria-label="Cancel reply"><X size={14} /></button>
+          </div>
+        )}
         {sendError && (
           <div className={`mb-2 border px-4 py-2.5 text-xs shadow-sm ${isTerminal ? 'border-rose-400/30 bg-black/30 text-rose-300 rounded-md' : 'rounded-2xl bg-rose-500/10 border-rose-500/20 text-rose-300'}`}>
             ⚠️ {sendError}
