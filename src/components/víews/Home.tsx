@@ -1,4 +1,5 @@
 import { Search, ArrowRight, FlaskConical, Radio, GraduationCap } from 'lucide-react';
+import type React from 'react';
 
 interface HomeProps {
   userName: string | null;
