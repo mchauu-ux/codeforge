@@ -57,7 +57,7 @@ const DEFAULT_TERMINAL_PALETTE: TerminalPalette = {
   secondaryText: '#4f8ee8',
   accent: '#39df91',
 };
-// huh?
+
 type ThemeKey = 'cozy' | 'cyber' | 'matcha' | 'sakura';
 type LangKey = 'en' | 'vi' | 'ja' | 'ko' | 'fr' | 'es';
 const STICKERS = [
