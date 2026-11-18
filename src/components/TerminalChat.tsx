@@ -776,9 +776,18 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
 
     return (
       <div
-        className={`fixed inset-0 z-50 flex flex-col ${isTerminal ? 'font-mono' : 'font-sans'} ${!isTerminal ? `${theme.bg} ${theme.text}` : ''} transition-colors duration-300`}
-        style={isTerminal ? { backgroundColor: terminalPalette.background, color: terminalPalette.primaryText } : undefined}
+        className={`fixed inset-0 z-50 flex transition-colors duration-300 ${
+          isTerminal
+            ? 'items-center justify-center bg-black/70 p-3 sm:p-6 font-mono'
+            : `flex-col font-sans ${theme.bg} ${theme.text}`
+        }`}
       >
+        <div
+          className={isTerminal
+            ? 'flex h-[min(88dvh,760px)] max-h-[calc(100dvh-1.5rem)] w-full max-w-5xl min-h-0 flex-col overflow-hidden rounded-xl border border-emerald-400/30 shadow-2xl'
+            : 'flex min-h-0 flex-1 flex-col'}
+          style={isTerminal ? { backgroundColor: terminalPalette.background, color: terminalPalette.primaryText } : undefined}
+        >
         {/* Header */}
         <header
           className={`group flex items-center justify-between border-b px-4 sm:px-6 py-3 backdrop-blur-md shadow-lg relative z-20 ${
@@ -935,7 +944,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
           ref={scrollRef}
           onScroll={handleScroll}
           onClick={(event) => { if (!(event.target as HTMLElement).closest('[data-message-row]')) { setActiveToolbarFor(null); setReactionMenuFor(null); } }}
-          className={`flex-1 overflow-y-auto px-4 sm:px-6 ${isTerminal ? 'pt-5 pb-6 space-y-3 bg-black/10' : 'pt-16 pb-6 space-y-4 bg-gradient-to-b from-transparent via-black/10 to-transparent'}`}
+          className={`flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden px-4 sm:px-6 ${isTerminal ? 'pt-5 pb-6 space-y-3 bg-black/10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden' : 'pt-16 pb-6 space-y-4 bg-gradient-to-b from-transparent via-black/10 to-transparent'}`}
         >
           <div className={`${isTerminal ? 'mb-4 border-b border-current/10 pb-3 text-left' : 'text-center my-3'}`}>
             {isTerminal ? (
@@ -1115,12 +1124,12 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
                     <button type="button" onClick={() => { setReplyTo(m); inputRef.current?.focus(); }} title="Reply" aria-label="Reply to message" className="rounded-lg p-1.5 hover:bg-white/10 hover:text-sky-300"><Reply size={13} /></button>
                     <div className="relative">
                       <button type="button" onClick={() => { setReactionMenuFor(reactionMenuFor === m.id ? null : m.id); setEmojiSearch(''); }} title="React" aria-label="React to message" className="rounded-lg p-1.5 hover:bg-white/10 hover:text-amber-300"><Smile size={13} /></button>
-                      {reactionMenuFor === m.id && <div className="absolute top-full left-0 z-40 mt-2 w-72 rounded-xl border border-current/20 bg-slate-950 p-3 text-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
+                      {reactionMenuFor === m.id && <div className="absolute top-full left-0 z-40 mt-2 w-[min(18rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] rounded-xl border border-current/20 bg-slate-950 p-3 text-white shadow-2xl" onClick={(event) => event.stopPropagation()} onMouseEnter={() => setActiveToolbarFor(m.id)}>
                         <div className="mb-2 flex items-center justify-between gap-2"><span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Quick reactions</span><button type="button" onClick={() => setEditingQuickEmojis((value) => !value)} className="text-[10px] text-sky-300 hover:text-sky-200">{editingQuickEmojis ? 'Done' : 'Customize'}</button></div>
                         <div className="mb-2 flex flex-wrap gap-1">{quickEmojis.map((emoji) => <button key={emoji} type="button" onClick={() => { if (editingQuickEmojis) setQuickEmojis((current) => current.filter((item) => item !== emoji)); else { void toggleReaction(m.id, emoji); setReactionMenuFor(null); } }} className="rounded-lg p-1.5 text-xl hover:bg-white/10" title={editingQuickEmojis ? 'Remove from quick bar' : `React ${emoji}`}>{emoji}</button>)}</div>
                         {editingQuickEmojis && <p className="mb-2 text-[10px] text-slate-500">Select emojis below to add or remove them from your quick bar.</p>}
                         <input value={emojiSearch} onChange={(event) => setEmojiSearch(event.target.value)} placeholder="Search emojis..." className="mb-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white outline-none placeholder:text-slate-500 focus:border-sky-400/50" />
-                        <div className="grid max-h-48 grid-cols-8 gap-1 overflow-y-auto">{UNIQUE_EMOJI_CATALOG.filter(([emoji, name]) => !emojiSearch || name.includes(emojiSearch.toLowerCase()) || emoji.includes(emojiSearch)).map(([emoji, name]) => <button key={`${emoji}-${name}`} type="button" onClick={() => { if (editingQuickEmojis) setQuickEmojis((current) => current.includes(emoji) ? current.filter((item) => item !== emoji) : [...current, emoji]); else { void toggleReaction(m.id, emoji); setReactionMenuFor(null); } }} className={`rounded-md p-1 text-lg hover:bg-white/15 ${quickEmojis.includes(emoji) ? 'bg-sky-500/20' : ''}`} title={name}>{emoji}</button>)}</div>
+                        <div className="grid max-h-48 grid-cols-8 gap-1 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{UNIQUE_EMOJI_CATALOG.filter(([emoji, name]) => !emojiSearch || name.includes(emojiSearch.toLowerCase()) || emoji.includes(emojiSearch)).map(([emoji, name]) => <button key={`${emoji}-${name}`} type="button" onClick={() => { if (editingQuickEmojis) setQuickEmojis((current) => current.includes(emoji) ? current.filter((item) => item !== emoji) : [...current, emoji]); else { void toggleReaction(m.id, emoji); setReactionMenuFor(null); } }} className={`rounded-md p-1 text-lg hover:bg-white/15 ${quickEmojis.includes(emoji) ? 'bg-sky-500/20' : ''}`} title={name}>{emoji}</button>)}</div>
                       </div>}
                     </div>
                     {own && canEditMessage(m) && !isImage && !isVideo && !isFileCard && <button type="button" onClick={() => beginEdit(m)} title="Edit (within 24 hours)" aria-label="Edit message" className="rounded-lg p-1.5 hover:bg-white/10 hover:text-emerald-300"><Pencil size={13} /></button>}
@@ -1421,6 +1430,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
               {sending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
             </button>
           </form>
+        </div>
         </div>
       </div>
     );
