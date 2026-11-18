@@ -970,7 +970,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
             )
           )}
 
-          {visible.map((m) => {
+          {visible.map((m, index) => {
       
             const own = m.sender_id === userId;
             const isSelected = selectedIds.includes(m.id);
@@ -992,9 +992,28 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
               mine: messageReactions.some((reaction) => reaction.emoji === emoji && reaction.user_id === userId),
             })).filter((reaction) => reaction.count > 0);
 
+            const previousMessage = index > 0 ? visible[index - 1] : null;
+            const showTimeSeparator = Boolean(
+              previousMessage &&
+              new Date(m.created_at).getTime() - new Date(previousMessage.created_at).getTime() > 60 * 60 * 1000
+            );
+
             return (
+            <div key={m.id} className="contents">
+              {showTimeSeparator && (
+                <div className={`my-3 flex w-full ${isTerminal ? 'justify-start pl-2' : 'justify-center'}`}>
+                  <span
+                    className={`inline-flex items-center px-3 py-1 text-xs font-medium tabular-nums ${
+                      isTerminal
+                        ? 'rounded-full bg-emerald-400/10 text-emerald-200/75 font-mono'
+                        : 'rounded-full bg-current/5 text-current/55'
+                    }`}
+                  >
+                    {formatDateTime(m.created_at)}
+                  </span>
+                </div>
+              )}
             <div
-    key={m.id}
     className={`group relative flex items-start gap-2 px-2 ${isTerminal ? 'justify-start' : own ? 'justify-end' : 'justify-start'}`} data-message-row={m.id}
   >
                 {selectMode && (
@@ -1163,6 +1182,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
                   </div>
                 )}
               </div>
+            </div>
             );
           })}
         </div>
