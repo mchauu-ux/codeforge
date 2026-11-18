@@ -1,4 +1,5 @@
   import { useEffect, useMemo, useRef, useState } from 'react';
+  import { createPortal } from 'react-dom';
   import { Send, Pin, PinOff, Trash2, Loader2, ArrowLeft, ChevronDown, Sparkles, Heart, Palette, CheckSquare, Square, Image as ImageIcon, FileText, Download, Eye, Settings, X, Globe, Smile, Upload, RotateCcw, Reply, Pencil, History } from 'lucide-react';
   import { useRealtimeMessages } from '../hooks/useRealtimeMessages';
   import { useChatSettings } from '../hooks/useChatSettings';
@@ -1124,13 +1125,29 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
                     <button type="button" onClick={() => { setReplyTo(m); inputRef.current?.focus(); }} title="Reply" aria-label="Reply to message" className="rounded-lg p-1.5 hover:bg-white/10 hover:text-sky-300"><Reply size={13} /></button>
                     <div className="relative">
                       <button type="button" onClick={() => { setReactionMenuFor(reactionMenuFor === m.id ? null : m.id); setEmojiSearch(''); }} title="React" aria-label="React to message" className="rounded-lg p-1.5 hover:bg-white/10 hover:text-amber-300"><Smile size={13} /></button>
-                      {reactionMenuFor === m.id && <div className="fixed left-1/2 top-1/2 z-[100] w-[min(22rem,calc(100vw-1rem))] max-h-[calc(100dvh-1rem)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl border border-current/20 bg-slate-950 p-3 text-white shadow-2xl" onClick={(event) => event.stopPropagation()} onMouseEnter={() => setActiveToolbarFor(m.id)}>
-                        <div className="mb-2 flex items-center justify-between gap-2"><span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Quick reactions</span><button type="button" onClick={() => setEditingQuickEmojis((value) => !value)} className="text-[10px] text-sky-300 hover:text-sky-200">{editingQuickEmojis ? 'Done' : 'Customize'}</button></div>
-                        <div className="mb-2 flex flex-wrap gap-1">{quickEmojis.map((emoji) => <button key={emoji} type="button" onClick={() => { if (editingQuickEmojis) setQuickEmojis((current) => current.filter((item) => item !== emoji)); else { void toggleReaction(m.id, emoji); setReactionMenuFor(null); } }} className="rounded-lg p-1.5 text-xl hover:bg-white/10" title={editingQuickEmojis ? 'Remove from quick bar' : `React ${emoji}`}>{emoji}</button>)}</div>
-                        {editingQuickEmojis && <p className="mb-2 text-[10px] text-slate-500">Select emojis below to add or remove them from your quick bar.</p>}
-                        <input value={emojiSearch} onChange={(event) => setEmojiSearch(event.target.value)} placeholder="Search emojis..." className="mb-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white outline-none placeholder:text-slate-500 focus:border-sky-400/50" />
-                        <div className="grid max-h-[min(52dvh,26rem)] grid-cols-8 gap-1 overflow-y-auto overflow-x-hidden overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0">{UNIQUE_EMOJI_CATALOG.filter(([emoji, name]) => !emojiSearch || name.includes(emojiSearch.toLowerCase()) || emoji.includes(emojiSearch)).map(([emoji, name]) => <button key={`${emoji}-${name}`} type="button" onClick={() => { if (editingQuickEmojis) setQuickEmojis((current) => current.includes(emoji) ? current.filter((item) => item !== emoji) : [...current, emoji]); else { void toggleReaction(m.id, emoji); setReactionMenuFor(null); } }} className={`rounded-md p-1 text-lg hover:bg-white/15 ${quickEmojis.includes(emoji) ? 'bg-sky-500/20' : ''}`} title={name}>{emoji}</button>)}</div>
-                      </div>}
+                      {reactionMenuFor === m.id && createPortal(
+                        <>
+                          <button
+                            type="button"
+                            aria-label="Close emoji picker"
+                            className="fixed inset-0 z-[99] cursor-default bg-black/10"
+                            onClick={() => { setReactionMenuFor(null); setActiveToolbarFor(null); setEditingQuickEmojis(false); }}
+                          />
+                          <div
+                            data-emoji-picker
+                            className="fixed left-1/2 top-1/2 z-[100] flex max-h-[min(80dvh,38rem)] w-[min(24rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-current/20 bg-slate-950 p-3 text-white shadow-2xl"
+                            onClick={(event) => event.stopPropagation()}
+                            onMouseDown={(event) => event.stopPropagation()}
+                          >
+                            <div className="mb-2 flex shrink-0 items-center justify-between gap-2"><span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Quick reactions</span><button type="button" onClick={() => setEditingQuickEmojis((value) => !value)} className="text-[10px] text-sky-300 hover:text-sky-200">{editingQuickEmojis ? 'Done' : 'Customize'}</button></div>
+                            <div className="mb-2 flex shrink-0 flex-wrap gap-1">{quickEmojis.map((emoji) => <button key={emoji} type="button" onClick={() => { if (editingQuickEmojis) setQuickEmojis((current) => current.filter((item) => item !== emoji)); else { void toggleReaction(m.id, emoji); setReactionMenuFor(null); setActiveToolbarFor(null); } }} className="rounded-lg p-1.5 text-xl hover:bg-white/10" title={editingQuickEmojis ? 'Remove from quick bar' : `React ${emoji}`}>{emoji}</button>)}</div>
+                            {editingQuickEmojis && <p className="mb-2 shrink-0 text-[10px] text-slate-500">Select emojis below to add or remove them from your quick bar.</p>}
+                            <input value={emojiSearch} onChange={(event) => setEmojiSearch(event.target.value)} placeholder="Search emojis..." className="mb-2 w-full shrink-0 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white outline-none placeholder:text-slate-500 focus:border-sky-400/50" />
+                            <div className="grid min-h-0 flex-1 grid-cols-8 content-start gap-1 overflow-y-auto overflow-x-hidden overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{UNIQUE_EMOJI_CATALOG.filter(([emoji, name]) => !emojiSearch || name.includes(emojiSearch.toLowerCase()) || emoji.includes(emojiSearch)).map(([emoji, name]) => <button key={`${emoji}-${name}`} type="button" onClick={() => { if (editingQuickEmojis) setQuickEmojis((current) => current.includes(emoji) ? current.filter((item) => item !== emoji) : [...current, emoji]); else { void toggleReaction(m.id, emoji); setReactionMenuFor(null); setActiveToolbarFor(null); } }} className={`rounded-md p-1 text-lg hover:bg-white/15 ${quickEmojis.includes(emoji) ? 'bg-sky-500/20' : ''}`} title={name}>{emoji}</button>)}</div>
+                          </div>
+                        </>,
+                        document.body
+                      )}
                     </div>
                     {own && canEditMessage(m) && !isImage && !isVideo && !isFileCard && <button type="button" onClick={() => beginEdit(m)} title="Edit (within 24 hours)" aria-label="Edit message" className="rounded-lg p-1.5 hover:bg-white/10 hover:text-emerald-300"><Pencil size={13} /></button>}
                     {edits.some((edit) => edit.message_id === m.id) && <button type="button" onClick={() => setHistoryFor(historyFor === m.id ? null : m.id)} title="View edit history" aria-label="View edit history" className="rounded-lg p-1.5 hover:bg-white/10 hover:text-violet-300"><History size={13} /></button>}
