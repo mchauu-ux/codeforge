@@ -1,32 +1,31 @@
-# React + TypeScript + Vite
+# CodeForge
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+## Setup
 
-Currently, two official plugins are available:
+1. Install dependencies with `npm install`.
+2. Create a `.env.local` file with `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
+3. Run `npm run dev`.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Only use the Supabase anon/publishable key in the browser. Never expose a service-role key in a `VITE_` variable or commit it to Git.
 
-## React Compiler
+## Private chat access
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The hidden chat is gated by the server-managed Supabase Auth `app_metadata` flag `codeforge_chat_access`. A client-side email list is not a security boundary.
 
-## Expanding the Oxlint configuration
+1. Apply every SQL migration in `supabase/migrations` to the Supabase project. The latest migration restricts chat data and avatar uploads to approved users.
+2. In the Supabase Dashboard, open **Authentication → Users**, select each approved user, and set their **app metadata** to include:
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+   ```json
+   {
+     "codeforge_chat_access": true
+   }
+   ```
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
+3. Have the approved user sign out and sign back in so the refreshed session contains the new app metadata.
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Do not put this flag in user-editable `user_metadata`: users must not be able to grant themselves access. Do not add service-role credentials to the frontend.
+
+## Build
+
+- `npm run build` — TypeScript check and production build.
+- `npm run lint` — Oxlint.
