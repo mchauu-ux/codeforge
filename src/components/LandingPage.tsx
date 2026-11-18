@@ -18,7 +18,6 @@ import CourseCard from './CourseCard';
 import Home from './views/Home';
 import Dashboard from './views/Dashboard';
 import Paths from './views/Paths';
-import Help from './views/Help';
 
 export type SectionId = 'home' | 'dashboard' | 'catalog' | 'paths' | 'certifications' | 'help' | 'settings';
 
@@ -317,7 +316,41 @@ export default function LandingPage({
             </section>
           )}
 
-          {section === 'help' && <Help />}
+          {section === 'help' && (
+            <section className="max-w-2xl">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900">Help Center</h1>
+              <div className="mt-6 space-y-3">
+                {[
+                  {
+                    q: 'How do enrollments work?',
+                    a: 'Apply through the portal. Seats open per cohort and you are notified by email in order of application.',
+                  },
+                  {
+                    q: 'Can I switch tracks mid-cohort?',
+                    a: 'Yes, during the first two weeks of any cohort, from your account settings.',
+                  },
+                  {
+                    q: 'Are courses self-paced?',
+                    a: 'Core content is self-paced; cohort critiques and certification exams run on a schedule.',
+                  },
+                  {
+                    q: 'Is there a student community?',
+                    a: 'Yes — accepted students get access to the private discussion channels for their cohort.',
+                  },
+                ].map((item) => (
+                  <details
+                    key={item.q}
+                    className="rounded-xl border border-slate-200 bg-white p-4 [&_summary::-webkit-details-marker]:hidden"
+                  >
+                    <summary className="cursor-pointer text-sm font-semibold text-slate-900">
+                      {item.q}
+                    </summary>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.a}</p>
+                  </details>
+                ))}
+              </div>
+            </section>
+          )}
 
           {section === 'settings' && (
             <section className="max-w-2xl">

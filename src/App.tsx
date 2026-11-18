@@ -6,10 +6,8 @@ import LandingPage from './components/LandingPage';
 import LoginModal from './components/LoginModal';
 import SignupModal from './components/SignupModal';
 import TerminalChat from './components/TerminalChat';
-import CommandTerminalChat from './components/CommandTerminalChat';
 
 const SECRET_TRIGGER = 'void_pointer_42';
-const TERMINAL_COMMAND = '/terminal';
 
 // 🛑 ADD YOUR 2 AUTHORIZED USER EMAILS HERE:
 const AUTHORIZED_EMAILS = [
@@ -23,25 +21,10 @@ function Portal() {
   const [loginOpen, setLoginOpen] = useState(false);
   const [signupOpen, setSignupOpen] = useState(false);
   const [chatMode, setChatMode] = useState(false);
-  const [terminalMode, setTerminalMode] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   const handleQueryChange = (q: string) => {
     setQuery(q);
-    if (q.trim().toLowerCase() === TERMINAL_COMMAND) {
-      const userEmail = session?.user.email ?? '';
-      if (session && AUTHORIZED_EMAILS.includes(userEmail)) {
-        setTerminalMode(true);
-        setQuery('');
-      } else if (!session) {
-        setQuery('');
-      } else {
-        setShowLoginPrompt(true);
-        setLoginOpen(true);
-        setQuery('');
-      }
-      return;
-    }
     if (q.trim() === SECRET_TRIGGER) {
       const userEmail = session?.user.email ?? '';
 
@@ -76,15 +59,6 @@ function Portal() {
           Loading CodeForge Academy…
         </div>
       </div>
-    );
-  }
-
-  if (terminalMode && session) {
-    return (
-      <CommandTerminalChat
-        userId={session.user.id}
-        onBack={() => setTerminalMode(false)}
-      />
     );
   }
 
