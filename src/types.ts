@@ -14,4 +14,6 @@ export interface ChatMessage {
   content: string;
   is_pinned: boolean;
   created_at: string;
+  updated_at?: string | null;
+  recalled_at?: string | null;
 }
