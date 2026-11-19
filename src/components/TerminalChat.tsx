@@ -45,6 +45,7 @@
     if (value.startsWith('data:video')) return '🎥 Video';
     try {
       const file = JSON.parse(value);
+      if (file?.__codeforge_media_v1) return file.type?.startsWith('video/') ? '🎥 Video' : '📷 Photo';
       if (file?.name && file?.data) return `📎 ${file.name}`;
     } catch { /* regular text */ }
     return value.replace(/\\s+/g, ' ').slice(0, 120) || 'Message';
@@ -459,7 +460,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
   };
 
 
-    const { messages, reactions, edits, connected, sendMessage, toggleReaction, togglePin, editMessage, recallMessage } =
+    const { messages, reactions, edits, connected, sendMessage, sendMediaMessage, toggleReaction, togglePin, editMessage, recallMessage } =
       useRealtimeMessages(userId, () => mountedRef.current);
     
     const [draft, setDraft] = useState('');
@@ -659,41 +660,6 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
       setPendingAttachments((previous) => previous.filter((item) => item.id !== id));
     };
 
-    const prepareMediaContent = async (attachment: PendingMediaAttachment) => {
-      const dataUrl = await readFileAsDataUrl(attachment.file);
-      if (attachment.kind === 'video') return dataUrl;
-
-      // Keep screenshots legible: resize only very large images (maximum 2400px) and
-      // preserve PNG format for sharp text/UI screenshots. Other formats use JPEG compression.
-      const img = new Image();
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error(`Could not process ${attachment.file.name || 'the image'}.`));
-        img.src = dataUrl;
-      });
-
-      let width = img.width;
-      let height = img.height;
-      const maxDim = 2400;
-      if (width > height && width > maxDim) {
-        height = (height * maxDim) / width;
-        width = maxDim;
-      } else if (height > maxDim) {
-        width = (width * maxDim) / height;
-        height = maxDim;
-      }
-
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      const context = canvas.getContext('2d');
-      if (!context) throw new Error('Could not prepare the image for sending.');
-      context.drawImage(img, 0, 0, width, height);
-      return attachment.file.type === 'image/png'
-        ? canvas.toDataURL('image/png')
-        : canvas.toDataURL('image/jpeg', 0.82);
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       const messageText = draft.trim();
@@ -727,15 +693,8 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
         // Send queued media one at a time. Remove each item only after it succeeds,
         // so failed and not-yet-sent files remain available for retry or removal.
         for (const attachment of attachmentsToSend) {
-          let content: string;
-          try {
-            content = await prepareMediaContent(attachment);
-          } catch (error) {
-            setSendError(error instanceof Error ? error.message : 'Could not prepare an attachment.');
-            return;
-          }
-
-          const { error } = await sendMessage(content);
+          // Upload the binary file to Supabase Storage; only small metadata is saved in messages.
+          const { error } = await sendMediaMessage(attachment.file);
           if (error) {
             setSendError(error);
             return;
@@ -1095,14 +1054,18 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
             const replyEnvelope = parseReplyEnvelope(m.content);
             const messageContent = replyEnvelope?.message ?? m.content;
             const isRecalled = Boolean(m.recalled_at);
-            const isImage = messageContent.startsWith('data:image');
-            const isVideo = messageContent.startsWith('data:video');
 
-            let filePayload = null;
+            let filePayload: any = null;
             try {
               if (messageContent.startsWith('{')) filePayload = JSON.parse(messageContent);
-            } catch {}
-            const isFileCard = filePayload && filePayload.data;
+            } catch { /* ordinary text message */ }
+
+            const isStoredMedia = filePayload?.__codeforge_media_v1 === true;
+            const isImage = messageContent.startsWith('data:image') || (isStoredMedia && filePayload.type?.startsWith('image/'));
+            const isVideo = messageContent.startsWith('data:video') || (isStoredMedia && filePayload.type?.startsWith('video/'));
+            const mediaSource = isStoredMedia ? filePayload.url : messageContent;
+            const isStoredMediaUnavailable = isStoredMedia && !filePayload.url;
+            const isFileCard = Boolean(filePayload && filePayload.data);
             const messageReactions = reactions.filter((reaction) => reaction.message_id === m.id);
             const reactionCounts = [...new Set(messageReactions.map((reaction) => reaction.emoji))].map((emoji) => ({
               emoji,
@@ -1159,7 +1122,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
                       className={`relative transition-all min-w-0 ${
                         isTerminal
                           ? `w-fit max-w-full text-[13px] leading-6 ${m.is_pinned ? 'outline outline-1 outline-current/30' : ''}`
-                          : isImage || isVideo || isFileCard
+                          : isImage || isVideo || isFileCard || isStoredMedia
                             ? ''
                             : `w-fit max-w-full rounded-2xl p-3.5 text-sm shadow-md ${own ? theme.bubbleOwn : theme.bubbleOther} ${own ? 'rounded-br-sm' : 'rounded-bl-sm'} ${m.is_pinned ? 'ring-2 ring-amber-400/60' : ''}`
                       } ${selectMode ? 'cursor-pointer hover:opacity-90' : ''}`}
@@ -1185,18 +1148,22 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
                       )}
                       {isImage ? (
                         <img
-                          src={messageContent}
+                          src={mediaSource}
                           alt="Shared media"
-                          onClick={() => setPreviewImage(messageContent)}
+                          onClick={() => setPreviewImage(mediaSource)}
                           className="rounded-3xl max-h-80 w-full object-cover cursor-pointer hover:opacity-95 transition-all shadow-lg border border-current/10"
                           title={t('clickToView')}
                         />
                       ) : isVideo ? (
                         <video
-                          src={messageContent}
+                          src={mediaSource}
                           controls
                           className="rounded-3xl max-h-80 w-full object-cover shadow-lg border border-current/10 bg-black/40"
                         />
+                      ) : isStoredMediaUnavailable ? (
+                        <div className="rounded-2xl border border-rose-400/25 bg-rose-500/10 px-3 py-2 text-xs text-rose-200">
+                          {filePayload.name || 'Media attachment'} could not be loaded. Check the chat-attachments Storage bucket permissions.
+                        </div>
                       ) : isFileCard ? (
                         <div className="flex items-center gap-2 rounded-2xl border border-current/20 bg-black/40 p-2.5 backdrop-blur-md shadow-lg w-full min-w-0">
                           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-pink-500/20 text-pink-300">
@@ -1286,7 +1253,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
                         document.body
                       )}
                     </div>
-                    {own && canEditMessage(m) && !isImage && !isVideo && !isFileCard && <button type="button" onClick={() => beginEdit(m)} title="Edit (within 24 hours)" aria-label="Edit message" className="rounded-lg p-1.5 hover:bg-white/10 hover:text-emerald-300"><Pencil size={13} /></button>}
+                    {own && canEditMessage(m) && !isImage && !isVideo && !isFileCard && !isStoredMedia && <button type="button" onClick={() => beginEdit(m)} title="Edit (within 24 hours)" aria-label="Edit message" className="rounded-lg p-1.5 hover:bg-white/10 hover:text-emerald-300"><Pencil size={13} /></button>}
                     {edits.some((edit) => edit.message_id === m.id) && <button type="button" onClick={() => setHistoryFor(historyFor === m.id ? null : m.id)} title="View edit history" aria-label="View edit history" className="rounded-lg p-1.5 hover:bg-white/10 hover:text-violet-300"><History size={13} /></button>}
                     <button type="button" onClick={() => void togglePin(m)} title={m.is_pinned ? 'Unpin' : 'Pin'} className="rounded-lg p-1.5 hover:bg-white/10 hover:text-amber-300">{m.is_pinned ? <PinOff size={13} /> : <Pin size={13} />}</button>
                     {own && canRecallMessage(m) && <button type="button" onClick={() => void handleRecall(m.id)} title="Recall (within 7 days)" aria-label="Recall message" className="rounded-lg p-1.5 hover:bg-white/10 hover:text-sky-300"><RotateCcw size={13} /></button>}
