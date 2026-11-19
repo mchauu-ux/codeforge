@@ -134,7 +134,6 @@ const sendMessage = async (content: string): Promise<{ error: string | null }> =
       content,
       email,
     });
-
   return { error: error?.message ?? null };
 };
 
