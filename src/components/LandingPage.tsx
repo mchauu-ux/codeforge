@@ -115,12 +115,7 @@ function CourseLibraryCard({ course, onOpen }: { course: CourseRecord; onOpen: (
     : course.level === 'Intermediate'
       ? 'bg-sky-50 text-sky-700 ring-sky-100'
       : 'bg-amber-50 text-amber-700 ring-amber-100';
-  const iconTone = course.level === 'Beginner'
-    ? 'from-emerald-500 to-teal-500'
-    : course.level === 'Intermediate'
-      ? 'from-sky-500 to-indigo-500'
-      : 'from-amber-500 to-orange-500';
-
+ 
   return (
     <button
       type="button"
