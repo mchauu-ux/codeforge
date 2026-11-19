@@ -109,11 +109,24 @@ export function useRealtimeMessages(
     };
   }, []);
 
-  const sendMessage = async (content: string): Promise<{ error: string | null }> => {
-    if (!senderId) return { error: 'Not signed in' };
-    const { error } = await supabase.from('messages').insert({ content });
-    return { error: error?.message ?? null };
-  };
+ const sendMessage = async (content: string): Promise<{ error: string | null }> => {
+  if (!senderId) return { error: 'Not signed in' };
+
+  const { data: { user }, error: authError } =
+    await supabase.auth.getUser();
+
+  if (authError) return { error: authError.message };
+  if (!user?.email) return { error: 'User email not found' };
+
+  const { error } = await supabase
+    .from('messages')
+    .insert({
+      content,
+      email: user.email,
+    });
+
+  return { error: error?.message ?? null };
+};
 
   const toggleReaction = async (messageId: string, emoji: string): Promise<{ error: string | null }> => {
     if (!senderId) return { error: 'Not signed in' };
