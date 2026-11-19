@@ -126,7 +126,14 @@ const sendMessage = async (content: string): Promise<{ error: string | null }> =
   if (!email) {
     return { error: 'User email not found' };
   }
+console.log('SENDING MESSAGE WITH EMAIL:', email);
 
+const { error } = await supabase
+  .from('messages')
+  .insert({
+    content,
+    email,
+  });
   // Insert message with the required email field
   const { error } = await supabase
     .from('messages')
