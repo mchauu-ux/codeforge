@@ -20,6 +20,13 @@
     message: string;
   };
 
+  type PendingMediaAttachment = {
+    id: string;
+    file: File;
+    previewUrl: string;
+    kind: 'image' | 'video';
+  };
+
   function parseReplyEnvelope(content: string): ReplyEnvelope | null {
     try {
       const value = JSON.parse(content);
@@ -456,6 +463,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
       useRealtimeMessages(userId, () => mountedRef.current);
     
     const [draft, setDraft] = useState('');
+    const [pendingAttachments, setPendingAttachments] = useState<PendingMediaAttachment[]>([]);
     const [sending, setSending] = useState(false);
     const [sendError, setSendError] = useState<string | null>(null);
     const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
@@ -542,12 +550,20 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
     const scrollRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const pendingObjectUrlsRef = useRef<Set<string>>(new Set());
     const mountedRef = useRef(true);
 
     useEffect(() => {
       mountedRef.current = true;
       return () => {
         mountedRef.current = false;
+      };
+    }, []);
+
+    useEffect(() => {
+      return () => {
+        pendingObjectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+        pendingObjectUrlsRef.current.clear();
       };
     }, []);
 
@@ -583,28 +599,162 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
       setAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 40);
     };
 
+    const readFileAsDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error(`Could not read ${file.name || 'the selected file'}.`));
+      reader.readAsDataURL(file);
+    });
+
+    // Images and videos are queued locally. Pasting or choosing them never sends them immediately.
+    // The existing 1 MB per-file limit is retained; there is no limit on the number of queued files.
+    const queueMediaFiles = (files: File[]) => {
+      const mediaFiles = files.filter((file) =>
+        file.type.startsWith('image/') || file.type.startsWith('video/')
+      );
+      const acceptedFiles = mediaFiles.filter((file) => file.size <= 1 * 1024 * 1024);
+      const rejectedFiles = mediaFiles.filter((file) => file.size > 1 * 1024 * 1024);
+
+      if (rejectedFiles.length > 0) {
+        setSendError(`These files are over the 1 MB per-file limit: ${rejectedFiles.map((file) => file.name || 'Unnamed file').join(', ')}`);
+      }
+
+      if (acceptedFiles.length === 0) return;
+
+      const queued = acceptedFiles.map((file): PendingMediaAttachment => {
+        const previewUrl = URL.createObjectURL(file);
+        pendingObjectUrlsRef.current.add(previewUrl);
+        return {
+          id: crypto.randomUUID(),
+          file,
+          previewUrl,
+          kind: file.type.startsWith('video/') ? 'video' : 'image',
+        };
+      });
+
+      // Append every accepted file; intentionally do not slice or cap this array.
+      setPendingAttachments((previous) => [...previous, ...queued]);
+    };
+
+    const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+      const clipboardItems = Array.from<DataTransferItem>(e.clipboardData.items);
+      const pastedFiles: File[] = clipboardItems
+        .filter((item) => item.kind === 'file' && (item.type.startsWith('image/') || item.type.startsWith('video/')))
+        .map((item) => item.getAsFile())
+        .filter((file): file is File => file !== null);
+
+      // Some browsers expose clipboard files through files rather than items.
+      const fallbackFiles: File[] = pastedFiles.length > 0
+        ? pastedFiles
+        : Array.from(e.clipboardData.files as FileList).filter((file: File) =>
+            file.type.startsWith('image/') || file.type.startsWith('video/')
+          );
+
+      if (fallbackFiles.length > 0) {
+        e.preventDefault();
+        setSendError(null);
+        queueMediaFiles(fallbackFiles);
+      }
+    };
+
+    const removePendingAttachment = (id: string) => {
+      const attachment = pendingAttachments.find((item) => item.id === id);
+      if (!attachment) return;
+      URL.revokeObjectURL(attachment.previewUrl);
+      pendingObjectUrlsRef.current.delete(attachment.previewUrl);
+      setPendingAttachments((previous) => previous.filter((item) => item.id !== id));
+    };
+
+    const prepareMediaContent = async (attachment: PendingMediaAttachment) => {
+      const dataUrl = await readFileAsDataUrl(attachment.file);
+      if (attachment.kind === 'video') return dataUrl;
+
+      // Preserve the existing image behavior: resize to at most 800px and encode as JPEG.
+      const img = new Image();
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error(`Could not process ${attachment.file.name || 'the image'}.`));
+        img.src = dataUrl;
+      });
+
+      let width = img.width;
+      let height = img.height;
+      const maxDim = 800;
+      if (width > height && width > maxDim) {
+        height = (height * maxDim) / width;
+        width = maxDim;
+      } else if (height > maxDim) {
+        width = (width * maxDim) / height;
+        height = maxDim;
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('Could not prepare the image for sending.');
+      context.drawImage(img, 0, 0, width, height);
+      return canvas.toDataURL('image/jpeg', 0.7);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       const messageText = draft.trim();
-      if (!messageText || sending) return;
-      const content = replyTo ? JSON.stringify({
-        __codeforge_reply_v1: true,
-        replyToId: replyTo.id,
-        replyToContent: summarizeReplyContent(replyTo.content),
-        replyToSenderId: replyTo.sender_id,
-        message: messageText,
-      } as ReplyEnvelope) : messageText;
+      const attachmentsToSend = [...pendingAttachments];
+      if ((!messageText && attachmentsToSend.length === 0) || sending) return;
+
       setSending(true);
       setSendError(null);
-      const { error } = await sendMessage(content);
-      if (error) {
-        setSendError(error);
-      } else {
-        setDraft('');
-        setReplyTo(null);
+
+      try {
+        // Send text first, preserving the existing reply-envelope behavior.
+        if (messageText) {
+          const content = replyTo ? JSON.stringify({
+            __codeforge_reply_v1: true,
+            replyToId: replyTo.id,
+            replyToContent: summarizeReplyContent(replyTo.content),
+            replyToSenderId: replyTo.sender_id,
+            message: messageText,
+          } as ReplyEnvelope) : messageText;
+
+          const { error } = await sendMessage(content);
+          if (error) {
+            setSendError(error);
+            return;
+          }
+
+          setDraft('');
+          setReplyTo(null);
+        }
+
+        // Send queued media one at a time. Remove each item only after it succeeds,
+        // so failed and not-yet-sent files remain available for retry or removal.
+        for (const attachment of attachmentsToSend) {
+          let content: string;
+          try {
+            content = await prepareMediaContent(attachment);
+          } catch (error) {
+            setSendError(error instanceof Error ? error.message : 'Could not prepare an attachment.');
+            return;
+          }
+
+          const { error } = await sendMessage(content);
+          if (error) {
+            setSendError(error);
+            return;
+          }
+
+          URL.revokeObjectURL(attachment.previewUrl);
+          pendingObjectUrlsRef.current.delete(attachment.previewUrl);
+          setPendingAttachments((previous) => previous.filter((item) => item.id !== attachment.id));
+        }
+
         setAtBottom(true);
+      } catch (error) {
+        setSendError(error instanceof Error ? error.message : 'Could not send the message.');
+      } finally {
+        setSending(false);
       }
-      setSending(false);
     };
 
     const handleSendSticker = async (symbol: string) => {
@@ -620,76 +770,47 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
       setSending(false);
     };
 
-    const handleAttachmentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
+    const handleAttachmentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files: File[] = Array.from(e.target.files || []);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (files.length === 0) return;
 
-      if (file.size > 1 * 1024 * 1024) {
-        setSendError('File size must be under 1MB for direct chat attachments.');
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        return;
-      }
+      setSendError(null);
+      queueMediaFiles(files);
 
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        const result = event.target?.result as string;
-        if (file.type.startsWith('image/')) {
-          const img = new Image();
-          img.onload = async () => {
-            const canvas = document.createElement('canvas');
-            let width = img.width;
-            let height = img.height;
-            const maxDim = 800;
+      // Keep the previous direct-send behavior for non-image/video documents.
+      const documentFiles = files.filter((file) =>
+        !file.type.startsWith('image/') && !file.type.startsWith('video/')
+      );
+      if (documentFiles.length === 0) return;
 
-            if (width > height && width > maxDim) {
-              height = (height * maxDim) / width;
-              width = maxDim;
-            } else if (height > maxDim) {
-              width = (width * maxDim) / height;
-              height = maxDim;
-            }
+      setSending(true);
+      try {
+        for (const file of documentFiles) {
+          if (file.size > 1 * 1024 * 1024) {
+            setSendError(`${file.name || 'This file'} is over the 1 MB limit for direct chat attachments.`);
+            continue;
+          }
 
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx?.drawImage(img, 0, 0, width, height);
-
-            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-
-            setSending(true);
-            setSendError(null);
-            const { error } = await sendMessage(compressedBase64);
-            if (error) setSendError(error);
-            else setAtBottom(true);
-            setSending(false);
-            if (fileInputRef.current) fileInputRef.current.value = '';
-          };
-          img.src = result;
-        } else if (file.type.startsWith('video/')) {
-          setSending(true);
-          setSendError(null);
-          const { error } = await sendMessage(result);
-          if (error) setSendError(error);
-          else setAtBottom(true);
-          setSending(false);
-          if (fileInputRef.current) fileInputRef.current.value = '';
-        } else {
+          const result = await readFileAsDataUrl(file);
           const payload = JSON.stringify({
             name: file.name,
             size: file.size,
             type: file.type,
             data: result,
           });
-          setSending(true);
-          setSendError(null);
           const { error } = await sendMessage(payload);
-          if (error) setSendError(error);
-          else setAtBottom(true);
-          setSending(false);
-          if (fileInputRef.current) fileInputRef.current.value = '';
+          if (error) {
+            setSendError(error);
+            break;
+          }
+          setAtBottom(true);
         }
-      };
-      reader.readAsDataURL(file);
+      } catch (error) {
+        setSendError(error instanceof Error ? error.message : 'Could not upload the selected file.');
+      } finally {
+        setSending(false);
+      }
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -1410,6 +1531,39 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
               ⚠️ {sendError}
             </div>
           )}
+          {pendingAttachments.length > 0 && (
+            <div className="mb-3 rounded-2xl border border-current/15 bg-black/10 p-3">
+              <div className="mb-2 flex items-center justify-between px-1 text-[11px] opacity-70">
+                <span>{pendingAttachments.length} attachment{pendingAttachments.length === 1 ? '' : 's'} ready to send</span>
+                <span>Click × to remove</span>
+              </div>
+              <div className="flex max-h-44 flex-wrap gap-3 overflow-y-auto">
+                {pendingAttachments.map((attachment) => (
+                  <div key={attachment.id} className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-current/20 bg-black/30">
+                    {attachment.kind === 'image' ? (
+                      <img src={attachment.previewUrl} alt={attachment.file.name || 'Image attachment'} className="h-full w-full object-cover" />
+                    ) : (
+                      <video src={attachment.previewUrl} aria-label={attachment.file.name || 'Video attachment'} className="h-full w-full object-cover" muted playsInline controls />
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removePendingAttachment(attachment.id)}
+                      disabled={sending}
+                      title="Remove attachment"
+                      aria-label={`Remove ${attachment.file.name || 'attachment'}`}
+                      className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-black/75 text-white shadow-md transition hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <X size={13} />
+                    </button>
+                    <span title={attachment.file.name} className="absolute bottom-0 left-0 right-0 truncate bg-black/65 px-1.5 py-1 text-[9px] text-white">
+                      {attachment.file.name || (attachment.kind === 'image' ? 'Image' : 'Video')}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center justify-between mb-3 px-2">
             <button
               onClick={() => setShowPinnedOnly((v) => !v)}
@@ -1425,6 +1579,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
               ref={fileInputRef}
               type="file"
               accept="image/*,video/*,.pdf,.doc,.docx,.txt,.xls,.xlsx,.csv,.zip"
+              multiple
               onChange={handleAttachmentUpload}
               className="hidden"
             />
@@ -1452,6 +1607,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
               type="text"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
+              onPaste={handlePaste}
               onKeyDown={handleKeyDown}
               placeholder={isTerminal ? 'Type a message...' : t('placeholder')}
               maxLength={2000}
@@ -1461,7 +1617,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
             />
             <button
               type="submit"
-              disabled={sending || !draft.trim()}
+              disabled={sending || (!draft.trim() && pendingAttachments.length === 0)}
               className={`flex h-12 w-12 shrink-0 items-center justify-center transition-all hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 ${isTerminal ? 'rounded-md border border-emerald-400/30 bg-emerald-400/10 text-emerald-300' : 'rounded-2xl bg-gradient-to-tr from-pink-500 to-purple-600 text-white shadow-md shadow-purple-500/25'}`}
             >
               {sending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
