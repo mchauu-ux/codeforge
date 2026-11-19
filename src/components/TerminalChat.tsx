@@ -607,21 +607,15 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
     });
 
     // Images and videos are queued locally. Pasting or choosing them never sends them immediately.
-    // The existing 1 MB per-file limit is retained; there is no limit on the number of queued files.
+    // There is no hard-coded per-file size limit or attachment-count limit for media.
     const queueMediaFiles = (files: File[]) => {
       const mediaFiles = files.filter((file) =>
         file.type.startsWith('image/') || file.type.startsWith('video/')
       );
-      const acceptedFiles = mediaFiles.filter((file) => file.size <= 1 * 1024 * 1024);
-      const rejectedFiles = mediaFiles.filter((file) => file.size > 1 * 1024 * 1024);
 
-      if (rejectedFiles.length > 0) {
-        setSendError(`These files are over the 1 MB per-file limit: ${rejectedFiles.map((file) => file.name || 'Unnamed file').join(', ')}`);
-      }
+      if (mediaFiles.length === 0) return;
 
-      if (acceptedFiles.length === 0) return;
-
-      const queued = acceptedFiles.map((file): PendingMediaAttachment => {
+      const queued = mediaFiles.map((file): PendingMediaAttachment => {
         const previewUrl = URL.createObjectURL(file);
         pendingObjectUrlsRef.current.add(previewUrl);
         return {
@@ -669,7 +663,8 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
       const dataUrl = await readFileAsDataUrl(attachment.file);
       if (attachment.kind === 'video') return dataUrl;
 
-      // Preserve the existing image behavior: resize to at most 800px and encode as JPEG.
+      // Keep screenshots legible: resize only very large images (maximum 2400px) and
+      // preserve PNG format for sharp text/UI screenshots. Other formats use JPEG compression.
       const img = new Image();
       await new Promise<void>((resolve, reject) => {
         img.onload = () => resolve();
@@ -679,7 +674,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
 
       let width = img.width;
       let height = img.height;
-      const maxDim = 800;
+      const maxDim = 2400;
       if (width > height && width > maxDim) {
         height = (height * maxDim) / width;
         width = maxDim;
@@ -694,7 +689,9 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
       const context = canvas.getContext('2d');
       if (!context) throw new Error('Could not prepare the image for sending.');
       context.drawImage(img, 0, 0, width, height);
-      return canvas.toDataURL('image/jpeg', 0.7);
+      return attachment.file.type === 'image/png'
+        ? canvas.toDataURL('image/png')
+        : canvas.toDataURL('image/jpeg', 0.82);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
