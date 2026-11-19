@@ -620,7 +620,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
       setSending(false);
     };
 
-    const handleAttachmentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const processAttachment = (file: File) => {
       const file = e.target.files?.[0];
       if (!file) return;
 
