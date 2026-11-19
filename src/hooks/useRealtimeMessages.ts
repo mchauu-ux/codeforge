@@ -109,41 +109,11 @@ export function useRealtimeMessages(
     };
   }, []);
 
- 
-const sendMessage = async (content: string): Promise<{ error: string | null }> => {
-  if (!senderId) return { error: 'Not signed in' };
-
-  // Get the currently authenticated user
-  const { data: authData, error: authError } =
-    await supabase.auth.getUser();
-
-  if (authError) {
-    return { error: authError.message };
-  }
-
-  const email = authData.user?.email;
-
-  if (!email) {
-    return { error: 'User email not found' };
-  }
-console.log('SENDING MESSAGE WITH EMAIL:', email);
-
-const { error } = await supabase
-  .from('messages')
-  .insert({
-    content,
-    email,
-  });
-  // Insert message with the required email field
-  const { error } = await supabase
-    .from('messages')
-    .insert({
-      content,
-      email,
-    });
-  return { error: error?.message ?? null };
-};
-
+  const sendMessage = async (content: string): Promise<{ error: string | null }> => {
+    if (!senderId) return { error: 'Not signed in' };
+    const { error } = await supabase.from('messages').insert({ content });
+    return { error: error?.message ?? null };
+  };
 
   const toggleReaction = async (messageId: string, emoji: string): Promise<{ error: string | null }> => {
     if (!senderId) return { error: 'Not signed in' };
