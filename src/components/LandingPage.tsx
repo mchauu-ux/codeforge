@@ -20,6 +20,13 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
+  Terminal,
+  Database,
+  Globe,
+  Cpu,
+  Cloud,
+  GitBranch,
+  Smartphone,
   Star,
   X,
   Zap,
@@ -72,37 +79,145 @@ const CERTIFICATIONS = [
     name: 'Certified Rust Systems Developer',
     level: 'Advanced',
     category: 'Systems programming',
-    description: 'A learning track focused on Rust fundamentals, memory safety, and systems-level development.',
+    description: 'Explore Rust, ownership, memory safety, concurrency, and the foundations of reliable systems software.',
     icon: Code2,
     tone: 'violet',
-    skills: ['Rust', 'Memory safety', 'Systems'],
+    skills: ['Rust', 'Memory safety', 'Concurrency', 'Systems'],
   },
   {
     name: 'Certified Distributed Systems Architect',
     level: 'Advanced',
-    category: 'Architecture',
-    description: 'Explore the ideas behind distributed applications, reliable services, and scalable architecture.',
+    category: 'Software architecture',
+    description: 'Study distributed application design, service communication, fault tolerance, and scalable architecture.',
     icon: Layers,
     tone: 'blue',
-    skills: ['Architecture', 'Networking', 'Scalability'],
+    skills: ['Architecture', 'Networking', 'Scalability', 'Reliability'],
   },
   {
     name: 'Certified Full-Stack TypeScript Engineer',
     level: 'Intermediate',
     category: 'Web development',
-    description: 'Build a foundation across typed frontend development and server-side application concepts.',
+    description: 'Build a foundation across typed frontend development, server-side applications, and full-stack workflows.',
     icon: GraduationCap,
     tone: 'cyan',
-    skills: ['TypeScript', 'Frontend', 'Backend'],
+    skills: ['TypeScript', 'React', 'APIs', 'Backend'],
   },
   {
     name: 'Certified CS Foundations',
     level: 'Beginner',
     category: 'Computer science',
-    description: 'Strengthen core programming concepts and build confidence with essential computer science ideas.',
+    description: 'Strengthen core programming concepts, computational thinking, problem solving, and essential CS ideas.',
     icon: BookOpen,
     tone: 'amber',
-    skills: ['Programming', 'Logic', 'Algorithms'],
+    skills: ['Programming', 'Logic', 'Algorithms', 'Problem solving'],
+  },
+  {
+    name: 'Certified Python Developer',
+    level: 'Beginner',
+    category: 'Programming languages',
+    description: 'Demonstrate understanding of Python syntax, data types, control flow, functions, modules, and introductory projects.',
+    icon: Terminal,
+    tone: 'emerald',
+    skills: ['Python', 'Functions', 'Data types', 'Debugging'],
+  },
+  {
+    name: 'Certified Java Application Developer',
+    level: 'Intermediate',
+    category: 'Application development',
+    description: 'Explore object-oriented programming, Java collections, exception handling, and application structure.',
+    icon: Code2,
+    tone: 'orange',
+    skills: ['Java', 'OOP', 'Collections', 'Exceptions'],
+  },
+  {
+    name: 'Certified Frontend Web Developer',
+    level: 'Intermediate',
+    category: 'Web development',
+    description: 'Create accessible, responsive interfaces and understand the building blocks of modern browser applications.',
+    icon: Globe,
+    tone: 'blue',
+    skills: ['HTML', 'CSS', 'JavaScript', 'Responsive UI'],
+  },
+  {
+    name: 'Certified Backend API Engineer',
+    level: 'Intermediate',
+    category: 'Backend development',
+    description: 'Learn the principles of server-side development, API design, request handling, and service integration.',
+    icon: GitBranch,
+    tone: 'violet',
+    skills: ['REST APIs', 'Node.js', 'HTTP', 'Authentication'],
+  },
+  {
+    name: 'Certified Data Structures & Algorithms',
+    level: 'Intermediate',
+    category: 'Problem solving',
+    description: 'Develop practical knowledge of common data structures, algorithmic strategies, and complexity analysis.',
+    icon: Activity,
+    tone: 'cyan',
+    skills: ['Arrays', 'Trees', 'Sorting', 'Big-O'],
+  },
+  {
+    name: 'Certified Database Design Specialist',
+    level: 'Intermediate',
+    category: 'Data management',
+    description: 'Understand relational data modeling, SQL queries, normalization, and the fundamentals of database design.',
+    icon: Database,
+    tone: 'teal',
+    skills: ['SQL', 'Data modeling', 'Joins', 'Normalization'],
+  },
+  {
+    name: 'Certified Cloud Computing Associate',
+    level: 'Intermediate',
+    category: 'Cloud technology',
+    description: 'Get familiar with cloud concepts, deployment models, hosted services, and the building blocks of cloud systems.',
+    icon: Cloud,
+    tone: 'blue',
+    skills: ['Cloud basics', 'Deployment', 'Storage', 'Services'],
+  },
+  {
+    name: 'Certified Cybersecurity Foundations',
+    level: 'Beginner',
+    category: 'Security',
+    description: 'Learn essential security principles, safe development practices, common risks, and basic threat awareness.',
+    icon: ShieldCheck,
+    tone: 'rose',
+    skills: ['Security basics', 'Privacy', 'Threats', 'Safe coding'],
+  },
+  {
+    name: 'Certified AI & Machine Learning Practitioner',
+    level: 'Advanced',
+    category: 'Artificial intelligence',
+    description: 'Explore machine learning workflows, data preparation, model evaluation, and responsible AI concepts.',
+    icon: Cpu,
+    tone: 'violet',
+    skills: ['Machine learning', 'Data', 'Model evaluation', 'AI'],
+  },
+  {
+    name: 'Certified DevOps & Automation Engineer',
+    level: 'Advanced',
+    category: 'Development operations',
+    description: 'Understand delivery pipelines, automation, version control workflows, and collaboration between development and operations.',
+    icon: GitBranch,
+    tone: 'orange',
+    skills: ['CI/CD', 'Git', 'Automation', 'Delivery'],
+  },
+  {
+    name: 'Certified Mobile App Developer',
+    level: 'Intermediate',
+    category: 'Mobile development',
+    description: 'Explore mobile interface patterns, application structure, device capabilities, and cross-platform concepts.',
+    icon: Smartphone,
+    tone: 'teal',
+    skills: ['Mobile UI', 'App structure', 'Navigation', 'UX'],
+  },
+  {
+    name: 'Certified Computer Networks Specialist',
+    level: 'Advanced',
+    category: 'Networking',
+    description: 'Study network architecture, communication protocols, addressing, and the concepts that connect modern systems.',
+    icon: Globe,
+    tone: 'amber',
+    skills: ['TCP/IP', 'Protocols', 'Routing', 'Networking'],
   },
 ] as const;
 
@@ -213,19 +328,19 @@ export default function LandingPage({
 
   return (
     <div className="min-h-screen bg-[#f5f7fc] text-slate-900">
-      <div className="flex min-h-screen">
+      <div className="min-h-screen">
         {/* Sidebar */}
         <aside
           className={cn(
-            'fixed inset-y-0 left-0 z-50 flex w-[276px] flex-col border-r border-slate-800/80 bg-[#10172a] text-white shadow-2xl shadow-slate-950/20 transition-transform duration-300 lg:static lg:z-20 lg:translate-x-0 lg:shadow-none',
+            'fixed inset-y-0 left-0 z-50 flex h-screen w-[276px] flex-col border-r border-slate-800/80 bg-[#10172a] text-white shadow-2xl shadow-slate-950/20 transition-transform duration-300 lg:z-20 lg:translate-x-0',
             sidebarOpen ? 'translate-x-0' : '-translate-x-full',
           )}
         >
-          <div className="relative flex h-full flex-col overflow-hidden">
+          <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
             <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-indigo-500/15 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-24 -left-20 h-56 w-56 rounded-full bg-blue-500/10 blur-3xl" />
 
-            <div className="relative flex items-center justify-between border-b border-white/10 px-5 py-5">
+            <div className="relative flex shrink-0 items-center justify-between border-b border-white/10 px-5 py-5">
               <button onClick={() => navigateTo('home')} className="flex items-center gap-3 text-left">
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 shadow-lg shadow-indigo-950/50 ring-1 ring-white/15">
                   <Code2 size={21} />
@@ -248,7 +363,7 @@ export default function LandingPage({
               </button>
             </div>
 
-            <div className="relative mx-4 mt-5 rounded-2xl border border-indigo-300/15 bg-gradient-to-br from-indigo-500/20 via-indigo-500/10 to-blue-500/10 p-4">
+            <div className="relative mx-4 mt-5 shrink-0 rounded-2xl border border-indigo-300/15 bg-gradient-to-br from-indigo-500/20 via-indigo-500/10 to-blue-500/10 p-4">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-200">Learning space</span>
                 <Sparkles size={15} className="text-indigo-200" />
@@ -263,7 +378,7 @@ export default function LandingPage({
               </button>
             </div>
 
-            <nav className="relative flex-1 overflow-y-auto px-3 pb-4 pt-6">
+            <nav className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-4 pt-6">
               <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Workspace</p>
               {(['Learn', 'More'] as const).map((group) => (
                 <div key={group} className="mb-5">
@@ -297,7 +412,7 @@ export default function LandingPage({
               ))}
             </nav>
 
-            <div className="relative mx-4 mb-4 rounded-xl border border-white/10 bg-white/[0.04] p-3">
+            <div className="relative mx-4 mb-4 shrink-0 rounded-xl border border-white/10 bg-white/[0.04] p-3">
               <div className="flex items-center gap-2">
                 <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-400/10 text-emerald-300">
                   <Activity size={16} />
@@ -319,7 +434,7 @@ export default function LandingPage({
               </div>
             </div>
 
-            <div className="relative border-t border-white/10 p-4">
+            <div className="relative shrink-0 border-t border-white/10 p-4">
               {sessionEmail ? (
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
@@ -361,8 +476,8 @@ export default function LandingPage({
           />
         )}
 
-        {/* Main application area */}
-        <div className="min-w-0 flex-1">
+        {/* Main application area: scrolls independently while the desktop sidebar remains fixed */}
+        <div className="min-w-0 min-h-screen lg:ml-[276px]">
           <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/85 backdrop-blur-xl">
             <div className="flex min-h-[76px] items-center gap-3 px-4 sm:px-6 xl:px-8">
               <button
@@ -606,7 +721,7 @@ export default function LandingPage({
                     <div className="max-w-2xl">
                       <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-indigo-100"><Award size={13} /> Achievements</span>
                       <h1 className="mt-3 text-2xl font-extrabold tracking-tight sm:text-3xl">Certifications</h1>
-                      <p className="mt-2 text-sm leading-6 text-indigo-100/80">Explore the certification tracks available in the academy and see which learning level they are designed for.</p>
+                      <p className="mt-2 text-sm leading-6 text-indigo-100/80">Explore a broader collection of learning tracks across programming, web development, data, systems, cloud technology, and computer science.</p>
                     </div>
                     <div className="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/10 p-4">
                       <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-300/15 text-amber-200"><ShieldCheck size={22} /></span>
@@ -618,9 +733,9 @@ export default function LandingPage({
                 <div className="mb-5 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
                   <div>
                     <h2 className="text-base font-extrabold text-slate-900">Available certification tracks</h2>
-                    <p className="mt-1 text-xs text-slate-500">Review the focus area, level, and skills associated with each track.</p>
+                    <p className="mt-1 text-xs text-slate-500">Compare each track by subject area, difficulty, and the skills it introduces.</p>
                   </div>
-                  <span className="text-[11px] font-medium text-slate-400">4 example tracks</span>
+                  <span className="text-[11px] font-medium text-slate-400">{CERTIFICATIONS.length} example tracks</span>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
@@ -631,6 +746,10 @@ export default function LandingPage({
                       blue: 'bg-blue-50 text-blue-600 ring-blue-100',
                       cyan: 'bg-cyan-50 text-cyan-600 ring-cyan-100',
                       amber: 'bg-amber-50 text-amber-600 ring-amber-100',
+                      emerald: 'bg-emerald-50 text-emerald-600 ring-emerald-100',
+                      orange: 'bg-orange-50 text-orange-600 ring-orange-100',
+                      teal: 'bg-teal-50 text-teal-600 ring-teal-100',
+                      rose: 'bg-rose-50 text-rose-600 ring-rose-100',
                     }[cert.tone];
                     return (
                       <article key={cert.name} className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-lg sm:p-6">
@@ -644,15 +763,15 @@ export default function LandingPage({
                         <div className="mt-4 flex flex-wrap gap-1.5">
                           {cert.skills.map((skill) => <span key={skill} className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-semibold text-slate-500">{skill}</span>)}
                         </div>
-                        <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
-                          <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-slate-400"><Star size={12} className="text-amber-400" /> Learning track</span>
-                          <span className="text-[10px] font-semibold text-slate-400">Track details above</span>
+                        <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4">
+                          <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-slate-500"><Star size={12} className="text-amber-400" /> Learning track</span>
+                          <span className="rounded-lg bg-slate-50 px-2.5 py-1.5 text-[10px] font-bold text-slate-500">{cert.skills.length} key skills</span>
                         </div>
                       </article>
                     );
                   })}
                 </div>
-                <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-[11px] leading-5 text-amber-800">Certification cards are informational previews in this interface. Exam registration, assessment, and certificate issuance require separate backend functionality.</p>
+                <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-[11px] leading-5 text-amber-800">These are sample certification-track concepts for the academy interface. They are not accredited credentials; exam registration, assessment, verification, and certificate issuance would need to be implemented separately.</p>
               </section>
             )}
 
