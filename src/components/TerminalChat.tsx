@@ -1339,26 +1339,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
               </div>
 
               <div className="p-6 space-y-5 text-xs overflow-y-auto">
-                <section className="space-y-2">
-                  <label htmlFor="secret-chat-name" className="flex items-center gap-2 font-medium text-purple-200">
-                    <Sparkles size={16} className="text-pink-400" /> {t('chatName')}
-                  </label>
-                  <input id="secret-chat-name" type="text" value={settingsTitleDraft}
-                    onChange={(e) => setSettingsTitleDraft(e.target.value)} maxLength={40}
-                    placeholder="Secret Sanctuary"
-                    className="w-full rounded-xl border border-purple-500/30 bg-[#121118] px-3 py-2.5 text-white outline-none placeholder:text-white/30 focus:border-pink-500" />
-                  <div className="flex gap-2">
-                    <button type="button" onClick={() => setSettingsTitleMode('local')}
-                      className={`flex-1 rounded-xl border px-3 py-2 ${settingsTitleMode === 'local' ? 'border-pink-400 bg-pink-500/20 text-white' : 'border-purple-500/30 text-purple-200'}`}>
-                      Only on my side
-                    </button>
-                    <button type="button" onClick={() => setSettingsTitleMode('shared')}
-                      className={`flex-1 rounded-xl border px-3 py-2 ${settingsTitleMode === 'shared' ? 'border-pink-400 bg-pink-500/20 text-white' : 'border-purple-500/30 text-purple-200'}`}>
-                      Both sides
-                    </button>
-                  </div>
-                </section>
-
+           
                 <section className="space-y-2">
                   <div className="font-medium text-purple-200 flex items-center gap-2"><ImageIcon size={16} className="text-pink-400" /> Chat avatar</div>
                   <div className="flex items-center gap-3">
