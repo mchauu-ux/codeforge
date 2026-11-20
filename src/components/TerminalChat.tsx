@@ -1,6 +1,6 @@
   import { useEffect, useMemo, useRef, useState } from 'react';
   import { createPortal } from 'react-dom';
-  import { Send, Pin, PinOff, Trash2, Loader2, ArrowLeft, ChevronDown, Sparkles, Heart, Palette, CheckSquare, Square, Image as ImageIcon, FileText, Download, Eye, Settings, X, Globe, Smile, Upload, RotateCcw, Reply, Pencil, History } from 'lucide-react';
+  import { Send, Pin, PinOff, Trash2, Loader2, ArrowLeft, ChevronDown, Sparkles, Heart, Palette, CheckSquare, Square, Image as ImageIcon, FileText, Download, Eye, Settings, X, Globe, Smile, Upload, RotateCcw, Reply, Pencil, History, Terminal } from 'lucide-react';
   import { useRealtimeMessages } from '../hooks/useRealtimeMessages';
   import { useChatSettings } from '../hooks/useChatSettings';
   import type { ChatMessage } from '../types';
@@ -26,6 +26,12 @@
     previewUrl: string;
     kind: 'image' | 'video';
   };
+
+type FakeCmdLine = {
+  id: string;
+  text: string;
+  kind: 'system' | 'command' | 'info' | 'success' | 'warning';
+};
 
   function parseReplyEnvelope(content: string): ReplyEnvelope | null {
     try {
@@ -106,7 +112,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
   const TRANSLATIONS: Record<LangKey, Record<string, string>> = {
     en: {
       back: 'Back to Academy',
-      title: '👻',
+      title: 'Secret Sanctuary',
       live: 'Live Connected',
       connecting: 'Connecting...',
       pinnedNotes: 'Pinned Notes',
@@ -134,7 +140,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
     },
     vi: {
       back: 'Quay lại Học viện',
-      title: '👻',
+      title: 'Nơi Trú Ẩn Bí Mật',
       live: 'Đã kết nối',
       connecting: 'Đang kết nối...',
       pinnedNotes: 'Ghi chú đã ghim',
@@ -162,7 +168,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
     },
     ja: {
       back: 'アカデミーに戻る',
-      title: '👻',
+      title: 'シークレット・サンクチュアリ',
       live: '接続済み',
       connecting: '接続中...',
       pinnedNotes: 'ピン留めされたメモ',
@@ -190,7 +196,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
     },
     ko: {
       back: '아카데미로 돌아가기',
-      title: '👻',
+      title: '시크릿 생추어리',
       live: '실시간 연결됨',
       connecting: '연결 중...',
       pinnedNotes: '고정된 노트',
@@ -218,7 +224,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
     },
       fr: {
       back: 'Retour à l’Académie',
-      title: '👻',
+      title: 'Sanctuaire Secret',
       live: 'Connecté',
       connecting: 'Connexion...',
       pinnedNotes: 'Notes épinglées',
@@ -246,7 +252,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
     },
     es: {
       back: 'Volver a la Academia',
-      title: '👻',
+      title: 'Santuario Secreto',
       live: 'Conectado',
       connecting: 'Conectando...',
       pinnedNotes: 'Notas fijadas',
@@ -347,7 +353,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
     const [localAvatar, setLocalAvatar] = useState<string | null>(() => localStorage.getItem(localAvatarKey));
     const [titleMode, setTitleMode] = useState<'local' | 'shared'>(() => (localStorage.getItem(titleModeKey) as 'local' | 'shared') || 'local');
     const [avatarMode, setAvatarMode] = useState<'local' | 'shared'>(() => (localStorage.getItem(avatarModeKey) as 'local' | 'shared') || 'local');
-    const chatTitle = '👻';
+    const chatTitle = titleMode === 'shared' ? sharedSettings.title : localTitle;
     const chatAvatar = avatarMode === 'shared' ? sharedSettings.avatar_url : localAvatar;
 
     const [settingsTitleDraft, setSettingsTitleDraft] = useState(localTitle);
@@ -464,6 +470,32 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
       useRealtimeMessages(userId, () => mountedRef.current);
     
     const [draft, setDraft] = useState('');
+    // CMD Mode is a local visual simulation. It never calls the chat or database APIs.
+    const [showCmdMode, setShowCmdMode] = useState(false);
+    const [cmdInput, setCmdInput] = useState('');
+    const [cmdLines, setCmdLines] = useState<FakeCmdLine[]>(() => {
+      const bootTime = new Date();
+      const stamp = bootTime.toLocaleTimeString();
+      const date = bootTime.toLocaleDateString();
+      return [
+        { id: 'boot-1', kind: 'system', text: 'Microsoft Windows [Version 10.0.26100]' },
+        { id: 'boot-2', kind: 'system', text: '(c) Microsoft Corporation. All rights reserved.' },
+        { id: 'boot-3', kind: 'system', text: '' },
+        { id: 'boot-4', kind: 'command', text: 'C:\\CodeForge\\SecretSanctuary> session --start' },
+        { id: 'boot-5', kind: 'info', text: `[${stamp}] [BOOT] Initializing local command interface...` },
+        { id: 'boot-6', kind: 'success', text: `[${stamp}] [OK] Local display session initialized.` },
+        { id: 'boot-7', kind: 'command', text: 'C:\\CodeForge\\SecretSanctuary> channel --status' },
+        { id: 'boot-8', kind: 'info', text: `[${stamp}] [INFO] Session date: ${date}` },
+        { id: 'boot-9', kind: 'success', text: `[${stamp}] [CHAT] Visual channel: READY` },
+        { id: 'boot-10', kind: 'success', text: `[${stamp}] [NETWORK] Outbound requests: DISABLED` },
+        { id: 'boot-11', kind: 'success', text: `[${stamp}] [DATABASE] Supabase writes: DISABLED` },
+        { id: 'boot-12', kind: 'success', text: `[${stamp}] [MESSAGING] Chat delivery: DISABLED` },
+        { id: 'boot-13', kind: 'command', text: 'C:\\CodeForge\\SecretSanctuary> help' },
+        { id: 'boot-14', kind: 'system', text: 'Type anything in the input below and press Enter to add a local log entry.' },
+        { id: 'boot-15', kind: 'warning', text: 'DEMO ONLY: This is not Windows CMD. No OS command will be executed.' },
+        { id: 'boot-16', kind: 'warning', text: 'Everything typed here stays in this component state and is not sent to the other person.' },
+      ];
+    });
     const [pendingAttachments, setPendingAttachments] = useState<PendingMediaAttachment[]>([]);
     const [sending, setSending] = useState(false);
     const [sendError, setSendError] = useState<string | null>(null);
@@ -550,6 +582,8 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
 
     const scrollRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const cmdScrollRef = useRef<HTMLDivElement>(null);
+    const cmdInputRef = useRef<HTMLInputElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const pendingObjectUrlsRef = useRef<Set<string>>(new Set());
     const mountedRef = useRef(true);
@@ -587,6 +621,17 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
     useEffect(() => {
       inputRef.current?.focus();
     }, []);
+
+    useEffect(() => {
+      if (showCmdMode) cmdInputRef.current?.focus();
+      else inputRef.current?.focus();
+    }, [showCmdMode]);
+
+    useEffect(() => {
+      if (showCmdMode && cmdScrollRef.current) {
+        cmdScrollRef.current.scrollTop = cmdScrollRef.current.scrollHeight;
+      }
+    }, [cmdLines, showCmdMode]);
 
     useEffect(() => {
       if (atBottom && scrollRef.current) {
@@ -658,6 +703,25 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
       URL.revokeObjectURL(attachment.previewUrl);
       pendingObjectUrlsRef.current.delete(attachment.previewUrl);
       setPendingAttachments((previous) => previous.filter((item) => item.id !== id));
+    };
+
+    const handleCmdSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      const submittedText = cmdInput.trim();
+      if (!submittedText) return;
+
+      const stamp = new Date().toLocaleTimeString();
+      const id = crypto.randomUUID();
+
+      // Deliberately local-only: this handler does not call sendMessage, fetch, or Supabase.
+      setCmdLines((previous) => [
+        ...previous,
+        { id: `${id}-input`, kind: 'command', text: `C:\\CodeForge\\SecretSanctuary> ${submittedText}` },
+        { id: `${id}-received`, kind: 'info', text: `[${stamp}] [LOCAL] Input captured in this CMD panel.` },
+        { id: `${id}-simulated`, kind: 'success', text: `[${stamp}] [SIMULATED] Local display updated successfully.` },
+        { id: `${id}-guard`, kind: 'warning', text: `[${stamp}] [DEMO] No command ran; no network request, chat message, or database write was made.` },
+      ]);
+      setCmdInput('');
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -866,6 +930,77 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
             : 'flex min-h-0 flex-1 flex-col'}
           style={isTerminal ? { backgroundColor: terminalPalette.background, color: terminalPalette.primaryText } : undefined}
         >
+        {isTerminal && showCmdMode ? (
+          <section className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#050505] font-mono text-[#d4d4d4]">
+            <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[#24527a] bg-[#111827] px-4 py-3 shadow-lg">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-sky-400/30 bg-sky-500/15 text-sky-300">
+                  <Terminal size={17} />
+                </div>
+                <div className="min-w-0">
+                  <div className="truncate text-xs font-semibold text-slate-100 sm:text-sm">Command Prompt</div>
+                  <div className="truncate text-[9px] text-sky-200/60 sm:text-[10px]">cmd.exe · LOCAL VISUAL SIMULATION</div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCmdMode(false)}
+                className="shrink-0 rounded-md border border-sky-300/30 bg-sky-400/10 px-3 py-2 text-[10px] font-semibold text-sky-100 transition hover:bg-sky-400/20 sm:text-xs"
+              >
+                <ArrowLeft size={13} className="mr-1 inline" />
+                Back to Chat
+              </button>
+            </header>
+
+            <div
+              ref={cmdScrollRef}
+              className="min-h-0 flex-1 overflow-y-auto bg-[#050505] px-4 py-5 text-[11px] leading-6 sm:px-6 sm:text-xs"
+            >
+              <div className="min-w-0 whitespace-pre-wrap break-words">
+                {cmdLines.map((line) => (
+                  <div
+                    key={line.id}
+                    className={
+                      line.kind === 'command' ? 'text-[#e5e7eb]' :
+                      line.kind === 'info' ? 'text-[#93c5fd]' :
+                      line.kind === 'success' ? 'text-[#86efac]' :
+                      line.kind === 'warning' ? 'text-[#facc15]' : 'text-[#cbd5e1]'
+                    }
+                  >
+                    {line.text || ' '}
+                  </div>
+                ))}
+                <div className="mt-2 text-[#93c5fd]">C:\CodeForge\SecretSanctuary&gt; <span className="animate-pulse text-white">▌</span></div>
+              </div>
+            </div>
+
+            <form onSubmit={handleCmdSubmit} className="flex shrink-0 items-center gap-2 border-t border-white/10 bg-[#111827] px-3 py-3 sm:px-5">
+              <label htmlFor="fake-cmd-input" className="shrink-0 text-[10px] text-[#93c5fd] sm:text-xs">C:\CodeForge&gt;</label>
+              <input
+                ref={cmdInputRef}
+                id="fake-cmd-input"
+                type="text"
+                value={cmdInput}
+                onChange={(event) => setCmdInput(event.target.value)}
+                placeholder="Type here and press Enter..."
+                autoComplete="off"
+                spellCheck={false}
+                className="min-w-0 flex-1 border border-white/10 bg-black/50 px-3 py-2.5 text-xs text-white outline-none placeholder:text-slate-500 focus:border-sky-400/50 sm:text-sm"
+              />
+              <button
+                type="submit"
+                disabled={!cmdInput.trim()}
+                className="shrink-0 rounded-md border border-sky-300/30 bg-sky-500/15 px-3 py-2.5 text-[10px] font-semibold text-sky-100 transition hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-40 sm:text-xs"
+              >
+                Enter ↵
+              </button>
+            </form>
+            <div className="shrink-0 border-t border-white/5 bg-[#0b101a] px-4 py-1.5 text-center text-[9px] text-amber-200/70">
+              LOCAL ONLY · NOT REAL WINDOWS CMD · NO CHAT MESSAGES OR SUPABASE WRITES
+            </div>
+          </section>
+        ) : (
+          <>
         {/* Header */}
         <header
           className={`group flex items-center justify-between border-b px-4 sm:px-6 py-3 backdrop-blur-md shadow-lg relative z-20 ${
@@ -916,6 +1051,21 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
               <CheckSquare size={14} />
               <span className={isTerminal ? 'hidden sm:inline' : ''}>{selectMode ? t('cancelSelect') : t('selectToDelete')}</span>
             </button>
+
+            {isTerminal && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowThemeMenu(false);
+                  setShowCmdMode(true);
+                }}
+                className="flex items-center gap-1.5 rounded-md border border-sky-400/30 bg-sky-400/5 px-3 py-1.5 text-[10px] font-medium text-sky-200 transition-all hover:bg-sky-400/15 sm:text-xs"
+                title="Open local CMD-style simulation"
+              >
+                <Terminal size={14} />
+                <span>CMD Mode</span>
+              </button>
+            )}
 
             {!isTerminal && <button
               onClick={openSettings}
@@ -1339,7 +1489,26 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
               </div>
 
               <div className="p-6 space-y-5 text-xs overflow-y-auto">
-           
+                <section className="space-y-2">
+                  <label htmlFor="secret-chat-name" className="flex items-center gap-2 font-medium text-purple-200">
+                    <Sparkles size={16} className="text-pink-400" /> {t('chatName')}
+                  </label>
+                  <input id="secret-chat-name" type="text" value={settingsTitleDraft}
+                    onChange={(e) => setSettingsTitleDraft(e.target.value)} maxLength={40}
+                    placeholder="Secret Sanctuary"
+                    className="w-full rounded-xl border border-purple-500/30 bg-[#121118] px-3 py-2.5 text-white outline-none placeholder:text-white/30 focus:border-pink-500" />
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setSettingsTitleMode('local')}
+                      className={`flex-1 rounded-xl border px-3 py-2 ${settingsTitleMode === 'local' ? 'border-pink-400 bg-pink-500/20 text-white' : 'border-purple-500/30 text-purple-200'}`}>
+                      Only on my side
+                    </button>
+                    <button type="button" onClick={() => setSettingsTitleMode('shared')}
+                      className={`flex-1 rounded-xl border px-3 py-2 ${settingsTitleMode === 'shared' ? 'border-pink-400 bg-pink-500/20 text-white' : 'border-purple-500/30 text-purple-200'}`}>
+                      Both sides
+                    </button>
+                  </div>
+                </section>
+
                 <section className="space-y-2">
                   <div className="font-medium text-purple-200 flex items-center gap-2"><ImageIcon size={16} className="text-pink-400" /> Chat avatar</div>
                   <div className="flex items-center gap-3">
@@ -1569,6 +1738,8 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
             </button>
           </form>
         </div>
+          </>
+        )}
         </div>
       </div>
     );
