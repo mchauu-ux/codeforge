@@ -679,6 +679,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
     const cmdScrollRef = useRef<HTMLDivElement>(null);
     const cmdInputRef = useRef<HTMLInputElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const documentInputRef = useRef<HTMLInputElement>(null);
     const pendingObjectUrlsRef = useRef<Set<string>>(new Set());
     const mountedRef = useRef(true);
 
@@ -886,7 +887,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
 
     const handleAttachmentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const files: File[] = Array.from(e.target.files || []);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      e.currentTarget.value = '';
       if (files.length === 0) return;
 
       setSendError(null);
@@ -1792,7 +1793,15 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*,video/*,.pdf,.doc,.docx,.txt,.xls,.xlsx,.csv,.zip"
+              accept="image/*,video/*"
+              multiple
+              onChange={handleAttachmentUpload}
+              className="hidden"
+            />
+            <input
+              ref={documentInputRef}
+              type="file"
+              accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.csv,.zip"
               multiple
               onChange={handleAttachmentUpload}
               className="hidden"
@@ -1800,10 +1809,19 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              title="Send Photo, Video, or Document"
+              title="Choose photos or videos from your library"
               className={`flex h-12 w-12 shrink-0 items-center justify-center border text-current opacity-70 hover:opacity-100 transition-all ${isTerminal ? 'rounded-md border-emerald-400/25 bg-emerald-400/5 hover:bg-emerald-400/10' : 'rounded-2xl border-current/20 bg-current/5 hover:bg-current/10 shadow-sm'}`}
             >
               <ImageIcon size={20} />
+            </button>
+            <button
+              type="button"
+              onClick={() => documentInputRef.current?.click()}
+              title="Choose a document from your files"
+              aria-label="Choose a document from your files"
+              className={`flex h-12 w-12 shrink-0 items-center justify-center border text-current opacity-70 hover:opacity-100 transition-all ${isTerminal ? 'rounded-md border-emerald-400/25 bg-emerald-400/5 hover:bg-emerald-400/10' : 'rounded-2xl border-current/20 bg-current/5 hover:bg-current/10 shadow-sm'}`}
+            >
+              <FileText size={20} />
             </button>
 
             {/* Stickers Button */}
