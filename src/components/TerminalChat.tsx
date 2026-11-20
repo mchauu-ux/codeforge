@@ -347,7 +347,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
     const [localAvatar, setLocalAvatar] = useState<string | null>(() => localStorage.getItem(localAvatarKey));
     const [titleMode, setTitleMode] = useState<'local' | 'shared'>(() => (localStorage.getItem(titleModeKey) as 'local' | 'shared') || 'local');
     const [avatarMode, setAvatarMode] = useState<'local' | 'shared'>(() => (localStorage.getItem(avatarModeKey) as 'local' | 'shared') || 'local');
-    const chatTitle = titleMode === 'shared' ? sharedSettings.title : localTitle;
+    const chatTitle = '👻';
     const chatAvatar = avatarMode === 'shared' ? sharedSettings.avatar_url : localAvatar;
 
     const [settingsTitleDraft, setSettingsTitleDraft] = useState(localTitle);
