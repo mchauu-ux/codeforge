@@ -33,6 +33,95 @@ type FakeCmdLine = {
   kind: 'system' | 'command' | 'info' | 'success' | 'warning';
 };
 
+
+// Long, prewritten CMD-style transcript. These are display-only strings, not real logs.
+const CMD_BOOT_LOG_MESSAGES: Array<{ kind: FakeCmdLine['kind']; text: string }> = [
+  { kind: 'system', text: 'CODEFORGE LOCAL CONSOLE :: EXTENDED STARTUP TRANSCRIPT' },
+  { kind: 'info', text: '[TRACE 0001] Preparing the visual command-prompt workspace.' },
+  { kind: 'success', text: '[TRACE 0002] Local component state is available.' },
+  { kind: 'info', text: '[TRACE 0003] Loading the prewritten display transcript into the scroll area.' },
+  { kind: 'success', text: '[TRACE 0004] Scroll container attached successfully.' },
+  { kind: 'info', text: '[TRACE 0005] Measuring available viewport height.' },
+  { kind: 'success', text: '[TRACE 0006] Viewport measurement completed.' },
+  { kind: 'info', text: '[TRACE 0007] Checking visual theme: classic command prompt.' },
+  { kind: 'success', text: '[TRACE 0008] Background set to near-black.' },
+  { kind: 'success', text: '[TRACE 0009] Primary text color set to console gray.' },
+  { kind: 'success', text: '[TRACE 0010] Prompt accent color set to soft command blue.' },
+  { kind: 'info', text: '[TRACE 0011] Loading local-only interaction hints.' },
+  { kind: 'warning', text: '[TRACE 0012] SIMULATION MODE: entered text is not executed as a system command.' },
+  { kind: 'warning', text: '[TRACE 0013] SIMULATION MODE: this panel does not start PowerShell, CMD, or a shell process.' },
+  { kind: 'warning', text: '[TRACE 0014] SIMULATION MODE: no files, folders, services, or settings are modified.' },
+  { kind: 'warning', text: '[TRACE 0015] SIMULATION MODE: no HTTP request is created from the text box.' },
+  { kind: 'warning', text: '[TRACE 0016] SIMULATION MODE: no message is delivered to the other chat participant.' },
+  { kind: 'warning', text: '[TRACE 0017] SIMULATION MODE: no Supabase insert, update, delete, or storage upload occurs.' },
+  { kind: 'info', text: '[TRACE 0018] Initializing decorative session timeline.' },
+  { kind: 'success', text: '[TRACE 0019] Decorative session timeline initialized.' },
+  { kind: 'info', text: '[TRACE 0020] Registering local prompt prefix: C:\\CodeForge\\SecretSanctuary>' },
+  { kind: 'success', text: '[TRACE 0021] Prompt prefix rendered.' },
+  { kind: 'info', text: '[TRACE 0022] Preparing command echo presentation.' },
+  { kind: 'success', text: '[TRACE 0023] Command echo presentation ready.' },
+  { kind: 'info', text: '[TRACE 0024] Preparing simulated response presentation.' },
+  { kind: 'success', text: '[TRACE 0025] Simulated response presentation ready.' },
+  { kind: 'info', text: '[TRACE 0026] Preparing timestamp labels for locally-added entries.' },
+  { kind: 'success', text: '[TRACE 0027] Timestamp labels ready.' },
+  { kind: 'info', text: '[TRACE 0028] Verifying that the fake input is bound to cmdInput state.' },
+  { kind: 'success', text: '[TRACE 0029] Fake input state binding confirmed.' },
+  { kind: 'info', text: '[TRACE 0030] Verifying that the fake form uses handleCmdSubmit.' },
+  { kind: 'success', text: '[TRACE 0031] Fake form handler confirmed.' },
+  { kind: 'warning', text: '[TRACE 0032] The real chat submit handler is intentionally not used in this view.' },
+  { kind: 'warning', text: '[TRACE 0033] The real chat draft is kept separate from the CMD input.' },
+  { kind: 'warning', text: '[TRACE 0034] Fake console entries are not added to the realtime messages list.' },
+  { kind: 'info', text: '[TRACE 0035] Preparing a long-form decorative channel report.' },
+  { kind: 'success', text: '[TRACE 0036] Channel report block loaded.' },
+  { kind: 'info', text: '[TRACE 0037] Display status: local interface ready.' },
+  { kind: 'info', text: '[TRACE 0038] Display status: message transport not connected to this panel.' },
+  { kind: 'info', text: '[TRACE 0039] Display status: database transport not connected to this panel.' },
+  { kind: 'info', text: '[TRACE 0040] Display status: operating-system process access not available.' },
+  { kind: 'info', text: '[TRACE 0041] Checking the decorative output buffer.' },
+  { kind: 'success', text: '[TRACE 0042] Decorative output buffer contains only local presentation entries.' },
+  { kind: 'info', text: '[TRACE 0043] Checking the decorative command history.' },
+  { kind: 'success', text: '[TRACE 0044] Command history is held in component state only.' },
+  { kind: 'info', text: '[TRACE 0045] Preparing the scroll-to-latest behavior.' },
+  { kind: 'success', text: '[TRACE 0046] Scroll-to-latest behavior is enabled.' },
+  { kind: 'info', text: '[TRACE 0047] Preparing the bottom input taskbar.' },
+  { kind: 'success', text: '[TRACE 0048] Bottom input taskbar is ready.' },
+  { kind: 'info', text: '[TRACE 0049] Back-to-chat control is tucked away until the taskbar is hovered.' },
+  { kind: 'info', text: '[TRACE 0050] Keyboard focus can reveal the taskbar control as well.' },
+  { kind: 'info', text: '[TRACE 0051] Responsive layout check: compact viewport.' },
+  { kind: 'success', text: '[TRACE 0052] Compact viewport layout prepared.' },
+  { kind: 'info', text: '[TRACE 0053] Responsive layout check: wide viewport.' },
+  { kind: 'success', text: '[TRACE 0054] Wide viewport layout prepared.' },
+  { kind: 'info', text: '[TRACE 0055] Rendering simulated status: INPUT CHANNEL READY.' },
+  { kind: 'success', text: '[TRACE 0056] Rendering simulated status: OUTPUT CHANNEL READY.' },
+  { kind: 'info', text: '[TRACE 0057] Rendering simulated status: LOCAL HISTORY READY.' },
+  { kind: 'info', text: '[TRACE 0058] Rendering simulated status: LIVE CHAT CHANNEL UNCHANGED.' },
+  { kind: 'info', text: '[TRACE 0059] Rendering simulated status: ORIGINAL CHAT COMPOSER PRESERVED.' },
+  { kind: 'info', text: '[TRACE 0060] Rendering simulated status: RETURN PATH AVAILABLE.' },
+  { kind: 'success', text: '[TRACE 0061] Visual initialization step 1 of 5 completed.' },
+  { kind: 'success', text: '[TRACE 0062] Visual initialization step 2 of 5 completed.' },
+  { kind: 'success', text: '[TRACE 0063] Visual initialization step 3 of 5 completed.' },
+  { kind: 'success', text: '[TRACE 0064] Visual initialization step 4 of 5 completed.' },
+  { kind: 'success', text: '[TRACE 0065] Visual initialization step 5 of 5 completed.' },
+  { kind: 'info', text: '[TRACE 0066] The following rows are sample diagnostics for appearance only.' },
+  { kind: 'info', text: '[TRACE 0067] Sample diagnostic: layout container measured.' },
+  { kind: 'info', text: '[TRACE 0068] Sample diagnostic: header region measured.' },
+  { kind: 'info', text: '[TRACE 0069] Sample diagnostic: output region measured.' },
+  { kind: 'info', text: '[TRACE 0070] Sample diagnostic: input region measured.' },
+  { kind: 'info', text: '[TRACE 0071] Sample diagnostic: taskbar region measured.' },
+  { kind: 'info', text: '[TRACE 0072] Sample diagnostic: text wrapping enabled.' },
+  { kind: 'info', text: '[TRACE 0073] Sample diagnostic: overflow scrolling enabled.' },
+  { kind: 'info', text: '[TRACE 0074] Sample diagnostic: long transcript loaded.' },
+  { kind: 'info', text: '[TRACE 0075] Sample diagnostic: local command echo enabled.' },
+  { kind: 'info', text: '[TRACE 0076] Sample diagnostic: simulated output enabled.' },
+  { kind: 'info', text: '[TRACE 0077] Sample diagnostic: no command interpreter present.' },
+  { kind: 'info', text: '[TRACE 0078] Sample diagnostic: no network transport present.' },
+  { kind: 'info', text: '[TRACE 0079] Sample diagnostic: no message delivery operation present.' },
+  { kind: 'info', text: '[TRACE 0080] Sample diagnostic: no database write operation present.' },
+  { kind: 'success', text: '[TRACE 0081] All display-only checks completed.' },
+  { kind: 'success', text: '[TRACE 0082] Extended transcript loaded successfully.' },
+  { kind: 'system', text: 'END OF PREWRITTEN STARTUP TRANSCRIPT · TYPE BELOW TO ADD YOUR OWN LOCAL LINES' },
+];
+
   function parseReplyEnvelope(content: string): ReplyEnvelope | null {
     try {
       const value = JSON.parse(content);
@@ -494,6 +583,11 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
         { id: 'boot-14', kind: 'system', text: 'Type anything in the input below and press Enter to add a local log entry.' },
         { id: 'boot-15', kind: 'warning', text: 'DEMO ONLY: This is not Windows CMD. No OS command will be executed.' },
         { id: 'boot-16', kind: 'warning', text: 'Everything typed here stays in this component state and is not sent to the other person.' },
+        ...CMD_BOOT_LOG_MESSAGES.map((entry, index): FakeCmdLine => ({
+          id: `boot-detail-${String(index + 1).padStart(3, '0')}`,
+          kind: entry.kind,
+          text: `[${stamp}] ${entry.text}`,
+        })),
       ];
     });
     const [pendingAttachments, setPendingAttachments] = useState<PendingMediaAttachment[]>([]);
@@ -942,14 +1036,6 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
                   <div className="truncate text-[9px] text-sky-200/60 sm:text-[10px]">cmd.exe · LOCAL VISUAL SIMULATION</div>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowCmdMode(false)}
-                className="shrink-0 rounded-md border border-sky-300/30 bg-sky-400/10 px-3 py-2 text-[10px] font-semibold text-sky-100 transition hover:bg-sky-400/20 sm:text-xs"
-              >
-                <ArrowLeft size={13} className="mr-1 inline" />
-                Back to Chat
-              </button>
             </header>
 
             <div
@@ -974,7 +1060,8 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
               </div>
             </div>
 
-            <form onSubmit={handleCmdSubmit} className="flex shrink-0 items-center gap-2 border-t border-white/10 bg-[#111827] px-3 py-3 sm:px-5">
+            <div className="group shrink-0" aria-label="CMD taskbar">
+            <form onSubmit={handleCmdSubmit} className="flex items-center gap-2 border-t border-white/10 bg-[#111827] px-3 py-3 sm:px-5">
               <label htmlFor="fake-cmd-input" className="shrink-0 text-[10px] text-[#93c5fd] sm:text-xs">C:\CodeForge&gt;</label>
               <input
                 ref={cmdInputRef}
@@ -995,8 +1082,21 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
                 Enter ↵
               </button>
             </form>
-            <div className="shrink-0 border-t border-white/5 bg-[#0b101a] px-4 py-1.5 text-center text-[9px] text-amber-200/70">
-              LOCAL ONLY · NOT REAL WINDOWS CMD · NO CHAT MESSAGES OR SUPABASE WRITES
+            <div className="relative flex min-h-9 items-center justify-center gap-3 border-t border-white/5 bg-[#0b101a] px-4 py-2 text-center text-[9px] text-amber-200/70 transition-colors group-hover:bg-[#111b2b] group-focus-within:bg-[#111b2b]">
+              <span className="max-w-full pl-1 pr-28 sm:px-28">
+                LOCAL DISPLAY SIMULATION ONLY · PREWRITTEN SAMPLE TRANSCRIPT · INPUT IS STORED ONLY IN THIS COMPONENT'S TEMPORARY REACT STATE · NO REAL WINDOWS CMD OR POWERSHELL PROCESS · NO OPERATING-SYSTEM COMMAND EXECUTION · NO FILE ACCESS · NO PROCESS LAUNCHING · NO NETWORK REQUESTS · NO API CALLS · NO REAL CHANNEL OPERATIONS · NO CHAT MESSAGE DELIVERY · NO REALTIME MESSAGE INSERTS · NO SUPABASE DATABASE WRITES · NO STORAGE UPLOADS · HOVER THIS TASKBAR TO REVEAL BACK TO CHAT · YOUR ORIGINAL CHAT, MESSAGE HISTORY, AND NORMAL COMPOSER REMAIN SEPARATE AND UNCHANGED
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowCmdMode(false)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded border border-sky-300/35 bg-sky-500/15 px-2.5 py-1.5 text-[9px] font-semibold text-sky-100 opacity-0 pointer-events-none transition-all duration-150 group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto max-sm:opacity-100 max-sm:pointer-events-auto"
+                aria-label="Back to Chat"
+                title="Back to Chat"
+              >
+                <ArrowLeft size={12} className="mr-1 inline" />
+                Back to Chat
+              </button>
+            </div>
             </div>
           </section>
         ) : (
