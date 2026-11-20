@@ -106,7 +106,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
   const TRANSLATIONS: Record<LangKey, Record<string, string>> = {
     en: {
       back: 'Back to Academy',
-      title: 'Secret Sanctuary',
+      title: '👻',
       live: 'Live Connected',
       connecting: 'Connecting...',
       pinnedNotes: 'Pinned Notes',
@@ -134,7 +134,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
     },
     vi: {
       back: 'Quay lại Học viện',
-      title: 'Nơi Trú Ẩn Bí Mật',
+      title: '👻',
       live: 'Đã kết nối',
       connecting: 'Đang kết nối...',
       pinnedNotes: 'Ghi chú đã ghim',
@@ -162,7 +162,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
     },
     ja: {
       back: 'アカデミーに戻る',
-      title: 'シークレット・サンクチュアリ',
+      title: '👻',
       live: '接続済み',
       connecting: '接続中...',
       pinnedNotes: 'ピン留めされたメモ',
@@ -190,7 +190,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
     },
     ko: {
       back: '아카데미로 돌아가기',
-      title: '시크릿 생추어리',
+      title: '👻',
       live: '실시간 연결됨',
       connecting: '연결 중...',
       pinnedNotes: '고정된 노트',
@@ -218,7 +218,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
     },
       fr: {
       back: 'Retour à l’Académie',
-      title: 'Sanctuaire Secret',
+      title: '👻',
       live: 'Connecté',
       connecting: 'Connexion...',
       pinnedNotes: 'Notes épinglées',
@@ -246,7 +246,7 @@ const UNIQUE_EMOJI_CATALOG = Array.from(new Map(EMOJI_CATALOG.map(([emoji, name]
     },
     es: {
       back: 'Volver a la Academia',
-      title: 'Santuario Secreto',
+      title: '👻',
       live: 'Conectado',
       connecting: 'Conectando...',
       pinnedNotes: 'Notas fijadas',
